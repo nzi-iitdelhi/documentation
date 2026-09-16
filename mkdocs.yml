@@ -1,0 +1,81 @@
+site_name: NZI Modelling Handbook
+site_description: Design principles, roles and workflows for the NZI supply-side and demand-side modelling pipelines.
+site_url: https://nzi-iitdelhi.github.io/documentation/
+repo_url: https://github.com/nzi-iitdelhi/documentation
+repo_name: nzi-iitdelhi/documentation
+edit_uri: edit/main/docs/
+copyright: Licensed under the MIT License. Contributions welcome.
+
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - content.action.edit
+    - content.code.copy
+    - search.suggest
+    - search.highlight
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Start here: getting-started.md
+  - Design principles:
+      - principles/index.md
+      - FAIR for models: principles/fair.md
+      - Provenance and versioning: principles/provenance.md
+  - Roles at a glance: roles.md
+  - Supply-side:
+      - supply-side/index.md
+      - Run an experiment: supply-side/run-an-experiment.md
+      - Developer: supply-side/developer.md
+      - Maintainer: supply-side/maintainer.md
+  - Demand-side:
+      - demand-side/index.md
+      - Run an experiment: demand-side/run-an-experiment.md
+      - Developer: demand-side/developer.md
+      - Maintainer: demand-side/maintainer.md
+  - PI sign-off: pi-signoff.md
+  - Reference:
+      - reference/repos.md
+      - Glossary: reference/glossary.md
+      - Edit this handbook: reference/contributing.md
