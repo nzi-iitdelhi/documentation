@@ -1,0 +1,51 @@
+/* NZI handbook palette: deep petrol + amber. Material custom scheme. */
+
+[data-md-color-scheme="nzi"] {
+  color-scheme: light;
+  --md-primary-fg-color:        #123847;
+  --md-primary-fg-color--light: #1d566c;
+  --md-primary-fg-color--dark:  #0b2430;
+  --md-accent-fg-color:         #b45309;
+  --md-typeset-a-color:         #0f6b81;
+  --md-default-bg-color:        #fcfcfa;
+  --md-code-bg-color:           #f2f4f3;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color:        #0e2b36;
+  --md-primary-fg-color--light: #1d566c;
+  --md-primary-fg-color--dark:  #071820;
+  --md-accent-fg-color:         #f0a23b;
+  --md-typeset-a-color:         #6fc7d9;
+  --md-default-bg-color:        #10181c;
+  --md-code-bg-color:           #17232a;
+}
+
+/* Typography: less shouty headings, tighter measure. */
+.md-typeset h1 { font-weight: 650; letter-spacing: -0.02em; color: var(--md-default-fg-color); }
+.md-typeset h2 { font-weight: 600; letter-spacing: -0.01em; margin-top: 2.2em; }
+.md-typeset h3 { font-weight: 600; }
+.md-typeset { line-height: 1.7; }
+
+/* Horizontal rules read as section breaks, not lines. */
+.md-typeset hr { border-bottom: 1px solid var(--md-default-fg-color--lightest); margin: 2.5em 0; }
+
+/* Tables carry most of this handbook: make them scannable. */
+.md-typeset table:not([class]) {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 6px;
+  font-size: 0.74rem;
+}
+.md-typeset table:not([class]) th {
+  background: var(--md-primary-fg-color);
+  color: #fff;
+  font-weight: 600;
+}
+.md-typeset table:not([class]) tr:hover { background: var(--md-default-fg-color--lightest); }
+
+/* Code + admonitions: softer corners, matches the rest. */
+.md-typeset pre > code,
+.md-typeset .admonition { border-radius: 6px; }
+
+/* Active nav tab gets the accent, not just bold. */
+.md-tabs__link--active { border-bottom: 2px solid var(--md-accent-fg-color); }

@@ -8,34 +8,40 @@ copyright: Licensed under the MIT License. Contributions welcome.
 
 theme:
   name: material
+  font:
+    text: Inter
+    code: JetBrains Mono
   features:
     - navigation.instant
     - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.sections
     - navigation.top
     - navigation.indexes
+    - navigation.footer
     - content.action.edit
     - content.code.copy
+    - content.tooltips
     - search.suggest
     - search.highlight
     - toc.follow
   palette:
     - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: teal
-      accent: teal
+      scheme: nzi
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: teal
-      accent: teal
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
   icon:
     repo: fontawesome/brands/github
+
+extra_css:
+  - stylesheets/extra.css
 
 markdown_extensions:
   - admonition
