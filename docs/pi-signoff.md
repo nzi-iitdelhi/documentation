@@ -1,108 +1,103 @@
 # PI sign-off
 
-Checklist for **anything that leaves the team**: paper, slide deck, public dataset, press
-figure, partner deliverable, public repo, release. One checklist, both sides.
+Anything that leaves the team goes through this page first: a paper, a slide deck, a public
+dataset, a figure for the press, a deliverable for a partner, a public repository or a
+release. The same checklist applies to both the supply and demand sides.
 
----
+It all comes down to one question:
 
-## The question
+> If someone outside the project asked me to justify this number, could I? And could they
+> reproduce it without our help?
 
-> **If someone outside this project asked me to justify this number, could I — and could
-> they reproduce it without our help?**
+If the answer is no, it is not ready to go out yet.
 
-If no, it does not go out yet.
+## What the person asking for sign-off should bring
 
----
+The review cannot really start without these:
 
-## What the requester brings
-
-If these are missing, the review has not begun.
-
-- [ ] One paragraph, plain language: **what is being claimed**
-- [ ] **Run IDs** and **base-case / seed version** behind every number
-- [ ] **Commit SHA or tag** of the code that produced them
-- [ ] The committed **experiment YAML** or **`run.yaml`**
-- [ ] Evidence the reference case reproduced in the same environment
+- [ ] a plain-language paragraph saying what is being claimed
+- [ ] the run IDs, and the base-case or seed version, behind every number
+- [ ] the commit SHA or release tag of the code that produced them
+- [ ] the recorded experiment definition: the exported YAML on the supply side, or `run.yaml`
+      on the demand side
+- [ ] evidence that the reference case was reproduced in the same environment
 
 !!! danger "A number without a run ID is not a result"
-    Send it back. Reconstructing provenance after the fact is how corrections happen.
+    Send it back. Reconstructing where a number came from after the fact is how
+    corrections end up being needed.
 
----
+## 1. Can it be reproduced?
 
-## 1. Reproducibility
+- [ ] every number can be traced along the [provenance chain](principles/provenance.md#the-chain)
+- [ ] the code is a tagged release, not a commit on someone's branch
+- [ ] someone outside the team could rerun it from the public repository and published data
+- [ ] nothing depends on a file that only exists on one person's machine
 
-- [ ] Every number traces along the [provenance chain](principles/provenance.md#the-chain)
-- [ ] Code is at a **tagged release**, not a commit on someone's branch
-- [ ] An outsider could rerun from the public repo and published data
-- [ ] Nothing depends on a file that exists only on one machine
+## 2. Is it correct?
 
-## 2. Correctness
+- [ ] the base case is the current approved version, and the version is stated
+- [ ] the validators passed, and the match rates are recorded
+- [ ] known discrepancies that affect this claim are disclosed. For demand-side work that means
+      cooling, the cooking fuel mix and emissions
+      (see the [list](demand-side/index.md#known-open-discrepancies)). Publishing a cooling
+      result without that caveat would be misleading.
+- [ ] the sensitivity ranges are plausible, and the direction of each effect is explained
+- [ ] someone other than the author has checked the numbers
 
-- [ ] Base case is the current approved version, and its version is stated
-- [ ] Validators passed; match rates recorded
-- [ ] **Known discrepancies affecting this claim are disclosed** — for demand work that
-      means cooling, cook fuel mix, emissions
-      ([list](demand-side/index.md#known-open-discrepancies)). A cooling result published
-      without that caveat is a misstatement.
-- [ ] Sensitivity ranges plausible; direction of effect explained
-- [ ] Someone other than the author has checked the numbers
+## 3. Does the claim match what was modelled?
 
-## 3. Scope of the claim
-
-- [ ] Claim matches what was modelled — a single-region result is not a national result
-- [ ] Uncertainty stated, not implied
-- [ ] Assumptions driving the headline are in the text, not an appendix
-- [ ] Not presented as a prediction of what *will* happen
+- [ ] the claim does not go beyond the model; a single-region result is not a national one
+- [ ] the uncertainty is stated, not just implied
+- [ ] the assumptions that drive the headline are in the main text, not hidden in an appendix
+- [ ] it is not presented as a prediction of what will happen
 
 ## 4. FAIR and licensing
 
-- [ ] Every published dataset carries an **explicit licence** ([R1.1](principles/fair.md))
-- [ ] Every published code artefact carries an explicit licence
-- [ ] Input-data licences permit this publication (check partner and survey data)
-- [ ] Unpublishable data still has **published metadata and access rules**
-- [ ] A **DOI** exists for anything citable — a GitHub URL is not a persistent identifier
-- [ ] Metadata is rich enough to judge relevance without downloading
+- [ ] every published dataset has an explicit licence ([R1.1](principles/fair.md))
+- [ ] every published piece of code has an explicit licence
+- [ ] the licences on our input data allow this publication; check partner and survey data in
+      particular
+- [ ] data we cannot publish still has published metadata and rules for requesting access
+- [ ] anything people will cite has a DOI, since a GitHub link is not a persistent identifier
+- [ ] the metadata is detailed enough for someone to judge whether the data is relevant
+      without downloading it
 
 ## 5. Attribution
 
-- [ ] Every contributor credited, including data suppliers
-- [ ] Upstream software cited: MACRO / MacroEnergy.jl, RUMI, other dependencies
-- [ ] Partner institutions named as agreed
-- [ ] Funder acknowledgements correct
-- [ ] Nobody credited who did not consent to the claim
+- [ ] every contributor is credited, including the people who supplied data
+- [ ] the software we built on is cited: MACRO (MacroEnergy.jl), RUMI and other dependencies
+- [ ] partner institutions are named as agreed
+- [ ] funders are acknowledged correctly
+- [ ] nobody is credited who has not agreed to the claim
 
 ## 6. Communication
 
-- [ ] Plain-language summary accurate, not just favourable
-- [ ] Charts have units, axes, stated base case and scenario
-- [ ] A figures-only reader would not draw a conclusion the text does not support
-- [ ] Caveats sit with the headline, not only in methods
+- [ ] the plain-language summary is accurate, not just favourable
+- [ ] charts have units and axis labels, and state the base case and the scenario
+- [ ] someone who only looks at the figures would not reach a conclusion the text does not
+      support
+- [ ] caveats appear next to the headline, not only in the methods section
 
----
+## Recording the decision
 
-## The decision
+There are four possible outcomes. **Approved** means it goes out as it is. **Approved with
+caveats** means it can go out once specific caveats are added to the text, and those caveats
+are written down. **Hold** means something in the chain is missing; say which item. **Rejected**
+means the claim is not supported by what was run.
 
-| Outcome | Meaning |
-|---|---|
-| **Approved** | Goes out as is |
-| **Approved with caveats** | Goes out once the named caveats are in the text — named **in writing** |
-| **Hold** | Something in the chain is missing. Say which item. |
-| **Rejected** | The claim is not supported by what was run |
+Record the decision somewhere it will last, such as an issue, a signed document or a dated
+note, together with the run IDs and the release tag.
 
-- [ ] Decision recorded somewhere durable — issue, signed doc, dated note — with run IDs
-      and release tag
+!!! note "Record what was approved, not just the result"
+    Six months later, the useful record is something like: "On this date, these run IDs at
+    this tag were approved for this claim, with these caveats."
 
-!!! note "Record the approval, not just the result"
-    Six months later the useful artefact is: "on this date, these run IDs at this tag were
-    approved for this claim, with these caveats."
+## If something goes out wrong
 
----
+1. Use the recorded run IDs and tag to establish exactly what was published.
+2. Work out whether the error is in the data, the model or the claim.
+3. Correct it publicly, reaching the same audience as the original.
+4. Add a check, whether a validator, a test or a line on this page, so the same mistake
+   cannot happen again.
 
-## When something goes out wrong
-
-1. Establish what was actually published, from the recorded run IDs and tag
-2. Determine whether the error is in the data, the model, or the claim
-3. Correct publicly, with the same reach as the original
-4. **Add a check** — a validator, a test, or a line on this page — so it cannot recur
-
-Step 4 is the one that gets skipped, and the only one that compounds.
+The last step is the one most often skipped, and it is the only one that keeps paying off.

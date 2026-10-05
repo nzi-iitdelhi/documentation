@@ -1,62 +1,66 @@
 # Repository map
 
-| Repository | Owns |
-|---|---|
-| [`documentation`](https://github.com/nzi-iitdelhi/documentation) | This handbook — principles, roles, workflows |
-| [`supply-side`](https://github.com/nzi-iitdelhi/supply-side) | Scenario database (scenarios, versions, sensitivities), input generation, MACRO runs, results; API + UI |
-| [`demand-side`](https://github.com/nzi-iitdelhi/demand-side) | Residential + transport demand pipelines, RUMI-compatible engine, central-server client |
+The work is spread over three repositories:
 
-**External:** [MacroEnergy.jl](https://github.com/macroenergy/MacroEnergy.jl) (the solver
-supply-side generates cases for) · [RUMI](https://github.com/prayas-energy/Rumi) (what
-`pier_db/` must stay identical to).
+- [`documentation`](https://github.com/nzi-iitdelhi/documentation) is this handbook: the
+  principles, roles and workflows.
+- [`supply-side`](https://github.com/nzi-iitdelhi/supply-side) holds the scenario database
+  (scenarios, versions and sensitivities), input generation, MACRO runs and results, with its
+  API and web interface.
+- [`demand-side`](https://github.com/nzi-iitdelhi/demand-side) holds the residential and
+  transport demand pipelines, the RUMI-compatible engine, and the client for the central
+  server.
 
----
+Two outside projects matter too. [MacroEnergy.jl](https://github.com/macroenergy/MacroEnergy.jl)
+is the model the supply side builds cases for, and [RUMI](https://github.com/prayas-energy/Rumi)
+is the framework that the demand side's `pier_db/` must match exactly.
 
 ## Where does this belong?
 
-| It is | Goes in |
+| If it is | It goes in |
 |---|---|
-| A scenario version / sensitivity | The supply-side database (UI or `yaml import`); `yaml export` for a file copy |
-| A demand experiment definition | `demand-side` — `overrides:` in `run.yaml` |
-| A base case, seed DB, bulk input data | **Neither** — staged into ignored dirs, tracked by content hash / version |
-| A generated model input or output | **Neither** — reproducible from the definition |
-| A run manifest | With the results. Never deleted ([FAIR A2](../principles/fair.md)). |
-| A design decision or argued trade-off | `docs/` in the relevant code repo |
-| A role, workflow, principle, checklist | **Here** |
-| A meeting decision that changes how the team works | **Here** — as an edit to the affected page, not a notes dump |
+| A supply-side scenario version or sensitivity | The supply-side database, through the web interface or `yaml import`. Use `yaml export` if you want a copy as a file. |
+| A demand-side experiment | `overrides:` in `run.yaml` in the demand-side repository |
+| A base case, seed database or bulk input data | Neither repository. It is staged into ignored folders and tracked by its content hash or version. |
+| A generated model input or a model output | Neither repository, because it can be regenerated from its definition |
+| A run manifest | Alongside the results. Never deleted ([FAIR A2](../principles/fair.md)). |
+| A design decision or an argued trade-off | `docs/` in the code repository it concerns |
+| A role, workflow, principle or checklist | This handbook |
+| A meeting decision that changes how the team works | This handbook, as an edit to the page it affects rather than a page of notes |
 
-!!! tip "The test"
-    Describes *how the team works* → here. Describes *how this module works* → next to the
-    module, where the person changing the code will update it.
+A simple test helps: if it describes how the team works, it belongs here. If it describes how
+one module works, it belongs next to that module, where the person changing the code will see
+it and keep it up to date.
 
----
+## What is deliberately not in git
 
-## Deliberately not in git
+Some things are kept out of git on purpose, and each has its own way of being tracked or
+recreated:
 
-| Not committed | Tracked instead by |
-|---|---|
-| Base cases, staged `data/` | Content hash, recorded on `import` |
-| Supply run folders (`runs/`) | `python -m supply_side recreate <run_id>` |
-| Supply databases (`db2.sqlite`, `results.duckdb`) | Server backups on each deploy; `make init` locally |
-| Model outputs | The run manifest — small and permanent |
-| `.duckdb` files | `nzi-pipeline pull-seed` |
-| Virtualenvs, `.deps/`, `node_modules/` | `uv` (supply), `pip install -e ".[dev]"` (demand), `npm install` |
+- **Base cases and the staged `data/` folder** are tracked by their content hash, which is
+  recorded on `import`.
+- **Supply-side run folders** (`runs/`) can be rebuilt with
+  `python -m supply_side recreate <run_id>`.
+- **Supply-side databases** (`db2.sqlite` and `results.duckdb`) are backed up on the server at
+  every deploy, and built locally with `make init`.
+- **Model outputs** are described by their run manifest, which is small and kept forever.
+- **Demand-side `.duckdb` files** are fetched with `nzi-pipeline pull-seed`.
+- **Virtual environments, `.deps/` and `node_modules/`** are recreated with `uv` on the supply
+  side, `pip install -e ".[dev]"` on the demand side, and `npm install` for the web interface.
 
 !!! danger
-    Never fix a wrong generated artefact by committing it. The fix is in the generator or
-    the definition.
-
----
+    Never fix a wrong generated file by committing a corrected copy. The fix belongs in the
+    generator or in the definition.
 
 ## Sources this handbook was built from
 
-| Source | Gave us |
-|---|---|
-| FAIR principles (Wilkinson et al. 2016) + the team's FAIR/NZI deck | [Design principles](../principles/index.md), [FAIR for models](../principles/fair.md) |
-| Concept note: scalable scenario and sensitivity analysis for MACRO | The nine design principles |
-| Meeting decisions, 24 Aug / 26 Aug / 1 Sep 2026 | Role boundaries, validation strategy, deployment targets |
-| `supply-side/` README, Makefile, `docs/nomenclature.md`, `docs/specs/` | Supply-side workflows (rewritten 2026-10-05 for the scenario database) |
-| `demand-side/` README, `CLAUDE.md`, `.github/` | Demand-side workflows, tests, CI, known diffs |
+The design principles and the FAIR page come from the FAIR principles (Wilkinson et al. 2016),
+the team's FAIR/NZI deck, and the concept note on scalable scenario and sensitivity analysis
+for MACRO. Role boundaries, the validation strategy and deployment targets come from the team
+meetings on 24 August, 26 August and 1 September 2026. The supply-side workflows come from that
+repository's README, Makefile, `docs/nomenclature.md` and `docs/specs/`, and were rewritten on
+5 October 2026 for the scenario database. The demand-side workflows, tests, CI and known
+discrepancies come from that repository's README, `CLAUDE.md` and `.github/`.
 
-When one of those changes and this handbook does not, the handbook is wrong.
-[Fix it](contributing.md).
+When one of those sources changes and this handbook does not, the handbook is wrong. Please
+[fix it](contributing.md).

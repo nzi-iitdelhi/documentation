@@ -1,98 +1,99 @@
 # Backend and API
 
-FastAPI + SQLModel + Alembic, in `supply_side/`. The full design is in the repo:
-`docs/specs/2026-09-28-approach-b-rebuild.md` (layout, lock rule, API conventions) and
-`docs/specs/2026-09-28-db2-entity-model.md` (every table).
+The backend lives in `supply_side/` and is built with FastAPI, SQLModel and Alembic. The full
+design is written up in the repository. `docs/specs/2026-09-28-approach-b-rebuild.md` covers
+the layout, the lock rule and the API conventions, and
+`docs/specs/2026-09-28-db2-entity-model.md` describes every table.
 
----
+## How the code is laid out
 
-## Layout
+The backend is split into packages by area. Each package has the same five files, and each
+file has one job:
 
-One package per area, each with the same five files:
+- `models.py` defines the tables, which all inherit the shared base model.
+- `schemas.py` defines the shapes of requests and responses.
+- `selectors.py` holds functions that read, and never write.
+- `services.py` holds functions that write. Every business rule lives here.
+- `router.py` defines the HTTP endpoints. Each endpoint calls one selector or one service and
+  does nothing else.
 
-| File | Holds | Rule |
-|---|---|---|
-| `models.py` | Tables | Inherit the base model |
-| `schemas.py` | Request / response shapes | — |
-| `selectors.py` | Reads | No writes |
-| `services.py` | Writes | **Every business rule lives here** |
-| `router.py` | HTTP endpoints | Calls one selector or one service, nothing else |
+The packages are:
 
-| Package | Owns |
+| Package | What it owns |
 |---|---|
-| `core/` | Settings, base model, enums, DB engine, errors, events, middleware, migrations runner |
-| `base/` | The imported base case: `base`, `base_file`, `base_cell` |
-| `library/` | `parameter`, `sensitivity_param`, the scale/add/set arithmetic |
-| `scenarios/` | Scenarios, versions, exploration params, sensitivities, trash |
-| `macro_inputs/` | Resolve changes, fingerprint, apply, rebuild a folder |
-| `runs/` | Batches, runs, logs, manifest, worker, solver call |
+| `core/` | Settings, the base model, enums, the database engine, errors, events, middleware, and the migration runner |
+| `base/` | The imported base case: `base`, `base_file` and `base_cell` |
+| `library/` | Parameters, sensitivity params, and the `scale`, `add` and `set` arithmetic |
+| `scenarios/` | Scenarios, versions, exploration params, sensitivities, and the trash |
+| `macro_inputs/` | Resolving changes, fingerprinting, applying them, and rebuilding a folder |
+| `runs/` | Run batches, runs, logs, the manifest, the worker, and the call to the solver |
 | `results/` | `ResultStore` and its DuckDB implementation |
 | `yaml_io/` | YAML import and export |
 
----
+## Conventions
 
-## Rules the code keeps
+Every table inherits the base model, which gives it a UUID `id`, `created_at` and
+`created_by`, `updated_at` and `updated_by`, and `is_deleted`, `deleted_at` and `deleted_by`.
+Detail tables such as `base_cell` and `cell_change` only carry `id` and `created_at`, and
+follow their parent row.
 
-- **Base model on every table:** UUID `id`, `created_at/by`, `updated_at/by`,
-  `is_deleted`, `deleted_at/by`. Detail rows (`base_cell`, `cell_change` …) carry only
-  `id` + `created_at`.
-- **Delete is soft.** Set `is_deleted`; query live rows with `live()` / `get_live()`.
-- **All enums in `core/enums.py`**, as `class X(str, Enum)`.
-- **No SQL triggers or views.** Foreign keys and (partial) unique constraints only.
-- **Portable SQL.** The relational store is reached only through a SQLAlchemy URL, so it
-  can move off SQLite. The columnar store only through `ResultStore`.
-- **Errors:** services raise `DomainError` (400), `NotFound` (404), `Conflict` (409).
-  They leave the API as `{"error": "<message>"}`.
-- **Every action writes an event** (`core/events.py`). The event table is append-only
-  history — the audit trail.
+Deleting is always a soft delete: it sets `is_deleted` and keeps the row. Use the `live()`
+and `get_live()` helpers to query rows that have not been deleted.
 
----
+All enums live in `core/enums.py` and are written as `class X(str, Enum)`.
 
-## The lock rule, in code
+We do not use SQL triggers or views, only foreign keys and unique constraints (some of them
+partial). The relational store is reached only through a SQLAlchemy URL with portable SQL, so
+it can move off SQLite later. The results store is reached only through `ResultStore`.
 
-Services enforce it; the UI only reflects it.
+Services report problems by raising `DomainError`, `NotFound` or `Conflict`. These become HTTP
+400, 404 and 409 responses with a body of `{"error": "<message>"}`.
 
-1. Draft versions and sensitivities are editable; each edit records an `updated` event.
-2. They lock when their first run is queued; a version also on first **Mark active**.
-3. A write to a locked row returns **409** with the reason and what to do instead.
-4. A new version starts from a locked version or the base, never a draft.
-5. **Mark active** needs a successful run. (Seeds may activate without one; the event
-   records that.)
+Every action writes an event through `core/events.py`. The event table is never edited or
+cleared, so it is the full audit trail.
 
----
+## The lock rule in code
+
+The services enforce the lock rule; the web interface only reflects it. Drafts of versions and
+sensitivities can be edited, and each edit records an `updated` event. They lock when their
+first run is queued, and a version also locks the first time it is marked active. Any write to
+a locked row returns 409, with a message explaining why and what to do instead. A new version
+must start from a locked version or from the base, never from a draft. Marking a version
+active requires a successful run, with one exception: the seed data may activate versions
+without a run, and the event records that it did.
 
 ## API conventions
 
-- Everything under `/api`; resources by UUID: `/api/scenarios/{id}`, `/api/versions/{id}`,
-  `/api/sensitivities/{id}`, `/api/macro-inputs/{id}`, `/api/runs/{id}`.
-- `DELETE` is soft and returns `{"ok": true}`.
-- Every response carries `X-Request-Id`.
-- OpenAPI page at <http://127.0.0.1:8002/docs> — the quickest way to see every endpoint.
+All endpoints sit under `/api`, and resources are addressed by UUID, for example
+`/api/scenarios/{id}`, `/api/versions/{id}`, `/api/sensitivities/{id}`,
+`/api/macro-inputs/{id}` and `/api/runs/{id}`. `DELETE` is a soft delete and returns
+`{"ok": true}`. Every response carries an `X-Request-Id` header.
 
----
+The quickest way to see every endpoint is the OpenAPI page at
+<http://127.0.0.1:8002/docs> while the API is running.
 
 ## Migrations
 
-Any change to a model is a migration, in the same PR.
+Any change to a model needs a migration in the same pull request:
 
 ```bash
-uv run python -m supply_side makemigrations -m "what changed"   # autogenerate
-# read the generated file in supply_side/migrations/versions/ — autogenerate misses things
-uv run python -m supply_side migrate
+uv run python -m supply_side makemigrations -m "what changed"   # generates a migration
+uv run python -m supply_side migrate                            # applies it
 ```
 
-- [ ] Renames are written by hand as renames, not drop + add (see `a7c3e91b5d20_rename_params.py`)
-- [ ] Upgrade tested on a database that already has data, not only a fresh one
-- [ ] A merged migration is never edited — add a new one
+Always read the generated file in `supply_side/migrations/versions/` before committing it,
+because autogenerate misses things. A rename in particular has to be written by hand as a
+rename; otherwise Alembic drops the old column and adds a new one, losing the data.
+`a7c3e91b5d20_rename_params.py` is a good example. Test the upgrade on a database that already
+has data in it, not only on a fresh one. Once a migration is merged, never edit it; add a new
+one instead.
 
-The deploy runs `migrate` on the server after a backup; a broken migration breaks the live
-site.
-
----
+This matters beyond your laptop. Each deploy backs up the server's database and then runs
+`migrate`, so a broken migration takes the live site down.
 
 ## Settings
 
-Everything is overridable from the environment (`core/settings.py`):
+Every setting can be overridden with an environment variable (see `core/settings.py`):
 
 | Variable | Default |
 |---|---|
@@ -100,6 +101,6 @@ Everything is overridable from the environment (`core/settings.py`):
 | `SUPPLY_COLUMNAR_URL` | `duckdb:///supply_side/results.duckdb` |
 | `SUPPLY_CASE_DIR` | `data/base-case` |
 | `SUPPLY_RUNS_DIR` | `runs/` |
-| `SUPPLY_JULIA` / `SUPPLY_JULIA_ENV` | `../.deps/julia/bin/julia` / `../.deps/env` |
-| `SUPPLY_ACTOR` | Your login name — written to `created_by` / `updated_by` |
+| `SUPPLY_JULIA`, `SUPPLY_JULIA_ENV` | `../.deps/julia/bin/julia` and `../.deps/env` |
+| `SUPPLY_ACTOR` | Your login name, which is written to `created_by` and `updated_by` |
 | `SUPPLY_MAX_PARALLEL` | `4` |

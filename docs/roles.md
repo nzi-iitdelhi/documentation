@@ -1,58 +1,62 @@
 # Roles at a glance
 
-Three roles. Hats, not job titles.
+We use three roles. They describe the work you are doing at the moment rather than your
+position, so the same person might be a developer in the morning and a maintainer in the
+afternoon.
 
-| Role | Answers | Fails by |
-|---|---|---|
-| **Owner / Maintainer** | "Is `main` still trustworthy?" | Merging something that breaks reproducibility |
-| **Developer** | "Is this change safe, tested, explainable?" | Shipping a change whose blast radius was never measured |
-| **PI** | "Will we stand behind this in public?" | Letting out a number the team cannot reproduce |
+The **maintainer** owns a repository. Their question is whether `main` is still
+trustworthy, and the way they fail is by merging something that quietly breaks
+reproducibility.
 
----
+The **developer** owns a change. Their question is whether this change is safe, tested and
+explainable. The usual failure is shipping something without working out what else it
+could affect.
+
+The **PI** owns what the outside world sees. Their question is whether we will stand behind
+a result in public. The failure here is letting out a number the team cannot reproduce.
 
 ## Who decides what
 
+Most decisions have one person who makes the call, and others who review it or need to be
+told.
+
 | Decision | Developer | Maintainer | PI |
 |---|---|---|---|
-| Approach taken in the code | **Decides** | Reviews | — |
-| Whether a PR merges | Proposes | **Decides** | — |
-| Regenerating golden outputs | Proposes + justifies | **Decides** | Informed |
-| Changing a base-case version | Proposes | **Decides** | Informed |
-| Cutting a release | — | **Decides** | Informed |
-| Anything that changes a published number | Proposes | Reviews | **Decides** |
-| Publishing a dataset, figure, paper | — | Prepares | **Decides** |
-| Licence and attribution | — | Proposes | **Decides** |
-| Repository write access | — | **Decides** | Consulted |
+| How the code solves a problem | Decides | Reviews | |
+| Whether a pull request merges | Proposes | Decides | |
+| Regenerating golden outputs | Proposes and justifies | Decides | Informed |
+| Changing the base-case version | Proposes | Decides | Informed |
+| Cutting a release | | Decides | Informed |
+| Anything that changes a published number | Proposes | Reviews | Decides |
+| Publishing a dataset, figure or paper | | Prepares | Decides |
+| Licence and attribution | | Proposes | Decides |
+| Who gets write access | | Decides | Consulted |
 
----
+## The role pages
 
-## Role pages
+The details differ between the two pipelines, so each side has its own pages.
 
-Specifics differ per pipeline, so role pages are per-side.
-
-| | Supply-side | Demand-side |
+| | Supply side | Demand side |
 |---|---|---|
-| Overview | [→](supply-side/index.md) | [→](demand-side/index.md) |
-| Run an experiment | [→](supply-side/run-an-experiment.md) | [→](demand-side/run-an-experiment.md) |
-| Developer | [→](supply-side/developer/index.md) | [→](demand-side/developer.md) |
-| Maintainer | [→](supply-side/maintainer.md) | [→](demand-side/maintainer.md) |
-| PI | [PI sign-off](pi-signoff.md) — one page, both sides | |
+| Overview | [Supply-side](supply-side/index.md) | [Demand-side](demand-side/index.md) |
+| Running experiments | [Run an experiment](supply-side/run-an-experiment.md) | [Run an experiment](demand-side/run-an-experiment.md) |
+| Changing code | [Developer](supply-side/developer/index.md) | [Developer](demand-side/developer.md) |
+| Looking after the repo | [Maintainer](supply-side/maintainer.md) | [Maintainer](demand-side/maintainer.md) |
 
----
+The PI has a single page for both sides: [PI sign-off](pi-signoff.md).
 
-## "I only run scenarios, I don't change code"
+## If you only run scenarios
 
-You are a Developer wearing a narrow hat. Go straight to **Run an experiment** for your
-side. Come back to the Developer page the first time you need something the experiment
-format (a YAML file, or a parameter change in the UI) cannot express.
+Running scenarios without touching code is still developer work, just a narrow part of it.
+Go straight to Run an experiment for your side. You only need the Developer page once you
+want something the experiment format cannot express, whether that is a YAML file or a
+parameter change in the web interface.
 
----
+## Onboarding someone new
 
-## Onboarding someone
-
-- [ ] Grant repo access, add to the right `CODEOWNERS` team
-- [ ] Point at [Start here](getting-started.md) — do not walk them through it
-- [ ] Ask them to reproduce the reference case and report the numbers
-- [ ] Their first PR is against **this handbook**, fixing whatever confused them
-
-> If a KT session was needed, the handbook has a gap.
+Give them access to the repositories and point them at [Start here](getting-started.md).
+Try not to walk them through it in person; the point is to find out whether the handbook
+works on its own. Ask them to reproduce the reference case and send you the numbers, and to
+make their first pull request a fix to this handbook covering whatever confused them. If
+they needed a long explanation from you along the way, that is a gap in the handbook worth
+closing.

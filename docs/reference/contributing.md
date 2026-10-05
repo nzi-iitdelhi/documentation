@@ -1,71 +1,63 @@
 # Edit this handbook
 
-This is a **living document**. If it was wrong when you needed it, fixing it is part of
-the work.
+This handbook is meant to change as the work changes. If it was wrong or unclear when you
+needed it, fixing it counts as part of your work.
 
----
+## The quick way
 
-## The fast way
+Click the pencil icon at the top right of any page. GitHub opens the page in its editor; make
+your change, then choose "Commit changes" and propose a pull request. You do not need to clone
+anything or install any tools, and this is the way we expect most edits to happen.
 
-1. Click the :material-pencil: pencil icon at the top right of any page
-2. Edit the markdown in GitHub's browser editor
-3. "Commit changes" → propose a pull request
+## Working locally
 
-No clone, no toolchain. This is the intended path for most edits.
-
----
-
-## Locally
+For bigger changes, you can run the site on your own machine:
 
 ```bash
 git clone git@github.com:nzi-iitdelhi/documentation.git
 cd documentation
 pip install -r requirements.txt
-zensical serve        # http://127.0.0.1:8000/documentation/, live reload
+zensical serve        # http://127.0.0.1:8000/documentation/, reloads as you edit
 ```
 
-Pages are plain markdown under `docs/`. Navigation is the `nav:` block in `mkdocs.yml` —
-a **new page must be added there** or it will not appear.
-
-Merging to `main` deploys automatically via GitHub Actions.
-
----
+Pages are plain Markdown files under `docs/`. The menu comes from the `nav:` block in
+`mkdocs.yml`, so a new page only appears once you add it there. When a change is merged into
+`main`, GitHub Actions publishes the site automatically.
 
 ## What belongs here
 
-| Belongs here | Belongs in the code repo |
-|---|---|
-| Roles, responsibilities, checklists | How a specific module works |
-| Cross-repo workflows | API/function docs |
-| Design principles and their rationale | Design notes for one component (`docs/` there) |
-| Onboarding | Changelogs |
+This handbook is for how the team works: roles and responsibilities, checklists, workflows
+that span both repositories, the design principles and the reasons behind them, and
+onboarding. How a particular module works, API and function documentation, design notes for a
+single component, and changelogs all belong in the code repository, next to the code they
+describe.
 
-The test: *how the team works* → here. *How this module works* → next to the module.
+## How we write
 
----
+Write the way you would explain something to a new colleague: in full sentences, starting with
+what the reader is trying to do. A few other things help:
 
-## House style
+- When you state a rule, say what goes wrong if it is ignored. People skip rules they do not
+  understand.
+- Link to information instead of copying it. Copies drift apart, and one of them ends up
+  wrong.
+- Make sure commands can be copied and pasted, and that they work today. Try them before you
+  commit.
+- Use checklists only for things people actually tick off, such as a pull request or a
+  release. Everything else reads better as prose.
+- If you are not sure about something, mark it with a `TODO` note rather than guessing.
 
-- **Checklists over prose.** Someone is reading this mid-task.
-- **Say what breaks** when a rule is ignored. A rule without a consequence gets skipped.
-- **Link, do not duplicate.** Duplicated facts drift apart; one of them becomes a lie.
-- **Commands must be copy-pasteable** and correct today. Verify before committing.
-- Mark uncertainty with a `TODO` admonition rather than guessing.
+## Keeping it accurate
 
----
+If you change a workflow this handbook describes, update the page in the same pull request as
+the code. When you onboard someone, ask them to make their first pull request against the
+handbook. Maintainers review the handbook as part of their monthly health check.
 
-## Keeping it honest
+If someone needed a long explanation from a colleague to get going, that is a sign of a gap
+here. Fixing the handbook is better than repeating the explanation for the next person.
 
-- Changing a documented workflow? Update the page **in the same PR** as the code.
-- Onboarding someone? Their first PR is against this handbook.
-- Maintainers: reviewing this handbook is on the monthly health check.
+## Reporting a problem
 
-> If a KT session was needed, the handbook has a gap. Fix the handbook rather than
-> repeating the session.
-
----
-
-## Reporting without fixing
-
-Not sure what the right answer is? [Open an issue](https://github.com/nzi-iitdelhi/documentation/issues).
-A reported gap is better than a silent one.
+If something is wrong and you are not sure what the right answer is,
+[open an issue](https://github.com/nzi-iitdelhi/documentation/issues). Reporting a gap is much
+better than leaving it.

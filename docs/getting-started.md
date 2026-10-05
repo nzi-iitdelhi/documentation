@@ -1,54 +1,53 @@
 # Start here
 
-Goal for week one: **reproduce one known result on your own machine.** Not to understand
-the whole system. Budget half a day.
+Your goal for the first week is modest: reproduce one known result on your own machine.
+You do not need to understand the whole system yet. Setting up and running the reference
+case usually takes about half a day.
 
----
+## 1. Get access
 
-## 1. Access
+Ask your maintainer to add you to the [`nzi-iitdelhi`](https://github.com/nzi-iitdelhi)
+organisation on GitHub with read access to `supply-side` and `demand-side`. Make sure your
+SSH key works (`ssh -T git@github.com` should greet you by name). You will also need access
+to the meeting notes and to the shared folder with the reference data, because the base
+case is not stored in git.
 
-- [ ] GitHub account in the [`nzi-iitdelhi`](https://github.com/nzi-iitdelhi) org
-- [ ] Read access to `supply-side` and `demand-side`
-- [ ] SSH key working (`ssh -T git@github.com` greets you by name)
-- [ ] Access to meeting notes + reference data folder
+## 2. Work out which side you are on
 
----
+If your work is about power plants, capacity, costs or the least-cost generation mix, you
+are on the [supply side](supply-side/index.md). If it is about appliances, vehicles,
+households or how much energy people need, you are on the
+[demand side](demand-side/index.md).
 
-## 2. Know which side you are on
-
-| Your work is about | You are on |
-|---|---|
-| Capacity, capex, least-cost mix, MACRO scenarios | [Supply-side](supply-side/index.md) |
-| Appliances, vehicles, households, energy *needed* | [Demand-side](demand-side/index.md) |
-
-Then read the [design principles](principles/index.md) — 10 minutes, explains why the code
-refuses some obvious-seeming things.
-
----
+Before going further, spend ten minutes on the [design principles](principles/index.md).
+They explain why the code refuses to do some things that look like obvious shortcuts.
 
 ## 3. Set up
 
 === "Supply-side"
 
-    Python 3.10+ with [`uv`](https://docs.astral.sh/uv/), Node 20+. Julia +
-    MacroEnergy.jl only if you will solve: `docs/how_to_run/run-macro-with-highs.md`.
+    You need Python 3.10 or newer with [`uv`](https://docs.astral.sh/uv/), and Node 20 or
+    newer for the web interface. Julia and MacroEnergy.jl are only needed if you will solve
+    cases yourself; the repo's `docs/how_to_run/run-macro-with-highs.md` explains how to
+    install them.
 
-    The base case comes from the reference data folder (see Access); `data/reference.txt`
-    names the folder `make data` copies.
+    The base case is copied from the reference data folder. The file `data/reference.txt`
+    says which folder `make data` copies from.
 
     ```bash
     git clone git@github.com:nzi-iitdelhi/supply-side.git
     cd supply-side
-    make help           # read the target list first
-    make data           # stage the base case into ignored data/
+    make help           # lists every target; worth reading once
+    make data           # copies the base case into data/ (not tracked by git)
     make test
-    make init           # databases: base case, library, 4 demo scenarios
+    make init           # builds the local databases with the base case and 4 demo scenarios
     ```
 
 === "Demand-side"
 
-    Python **3.10–3.12, not 3.13** — `rumi` pins `numpy==1.26.4` / `pandas==2.2.1`, which
-    have no 3.13 wheels, so install tries to compile numpy from source and fails.
+    Use Python 3.10, 3.11 or 3.12. Python 3.13 does not work: `rumi` pins
+    `numpy==1.26.4` and `pandas==2.2.1`, which have no 3.13 wheels, so the install tries to
+    compile numpy from source and fails.
 
     ```bash
     git clone git@github.com:nzi-iitdelhi/demand-side.git nzi
@@ -58,30 +57,33 @@ refuses some obvious-seeming things.
     bash scripts/test.sh unit
     ```
 
-    **Residential only:** needs R + the `survey` package (`Rscript` is called for three
-    survey-weighted logistic regressions). Transport has no R dependency.
-
----
+    The residential sector also needs R with the `survey` package, because the pipeline
+    calls `Rscript` for three survey-weighted logistic regressions. Transport does not need
+    R.
 
 ## 4. Reproduce a known result
 
-This is the part that matters.
+This is the step that matters.
 
 === "Supply-side"
 
-    ```bash
-    make run-local       # UI at http://127.0.0.1:3000, API at :8002
-    ```
-
-    Open a scenario, its active version, and **Review** it against the base — you should
-    see exactly which cells it changes. Then solve a small case (needs Julia), with the
-    API stopped:
+    Start the API and the web interface together:
 
     ```bash
-    uv run python -m supply_side run 0 --periods 2 --subperiods 2 --wait   # 0 = Base Case
+    make run-local       # UI at http://127.0.0.1:3000, API on port 8002
     ```
 
-    Write down the objective value. That is your baseline.
+    Open a scenario and its active version, then click **Review** to compare it with the
+    base. You should see exactly which cells of the model input it changes.
+
+    To solve a small version of the base case (this needs Julia), stop the API first and
+    run:
+
+    ```bash
+    uv run python -m supply_side run 0 --periods 2 --subperiods 2 --wait   # 0 is the Base Case scenario
+    ```
+
+    Write down the objective value it reports. That is your baseline.
 
 === "Demand-side"
 
@@ -89,34 +91,27 @@ This is the part that matters.
     python -m nzi_pipeline seed --sector residential
     python -m nzi_pipeline run  --sector residential
     python -m pier_db run --sector D_RES
-    bash scripts/test.sh integration   # golden-output check at 1e-6
+    bash scripts/test.sh integration   # checks outputs against the golden files at 1e-6
     ```
 
----
+## 5. Read about the known problems
 
-## 5. Read the known gaps
+Some numbers are known to be off, and the reasons are written down. Before you report a
+bug, check the supply side's `INF_FIX_CHANGELOG.md` and `docs/nomenclature.md`, and the
+demand side's [known discrepancies](demand-side/index.md#known-open-discrepancies).
 
-Before you "discover" a tracked bug:
+## 6. Make your first contribution
 
-- Supply: `INF_FIX_CHANGELOG.md`, `docs/nomenclature.md`
-- Demand: [known discrepancies](demand-side/index.md#known-open-discrepancies)
+Your first pull request should not be code. Make it a fix to this handbook, covering
+everything that was wrong or unclear while you worked through this page. The pencil icon at
+the top of each page takes you straight to the editor. That pull request is the end of your
+onboarding.
 
----
+## What next
 
-## 6. Your first contribution
-
-Not code. A PR against [this handbook](https://github.com/nzi-iitdelhi/documentation)
-fixing everything that was wrong or unclear while you worked through it. Use the
-:material-pencil: icon on any page.
-
-That PR is your onboarding deliverable.
-
----
-
-## Then
-
-| Next | Go to |
-|---|---|
-| Run your own scenario | [Supply](supply-side/run-an-experiment.md) · [Demand](demand-side/run-an-experiment.md) |
-| Change code | [Supply dev](supply-side/developer/index.md) · [Demand dev](demand-side/developer.md) |
-| Vocabulary | [Glossary](reference/glossary.md) |
+When you are ready to run your own scenario, read Run an experiment for the
+[supply side](supply-side/run-an-experiment.md) or the
+[demand side](demand-side/run-an-experiment.md). When you need to change code, read the
+Developer pages for the [supply side](supply-side/developer/index.md) or the
+[demand side](demand-side/developer.md). Unfamiliar words are in the
+[glossary](reference/glossary.md).

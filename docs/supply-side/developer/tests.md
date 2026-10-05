@@ -1,40 +1,45 @@
 # Tests
 
 ```bash
-make test     # unittest, ~180 tests, ~15 s — no Julia, no network
-make lint     # black --check --diff, CI-safe
-make format   # black, rewrites files
+make test     # about 180 tests in about 15 seconds; needs no Julia and no network
+make lint     # checks formatting with black, without changing anything
+make format   # reformats the code with black
 ```
 
-UI: `cd web && npm run lint`, then `./check-routes.sh` with the app up — see
-[Web UI](web-ui.md#checking-a-change).
+For the web interface, run `npm run lint` in `web/`, then `./check-routes.sh` with the app
+running. The [Web UI](web-ui.md#checking-a-change) page explains both.
 
----
+## How the suite works
 
-## How the suite is built
+The tests use `unittest`, not pytest, and live in `tests/test_*.py`.
 
-- **`unittest`**, not pytest. Files are `tests/test_*.py`.
-- **`tests/helpers.py`** gives each test an in-memory SQLite database, a `TestClient`
-  wired to it, a tiny fake MACRO case (`make_case`), and a `seeded_world` with scenarios
-  and runs already in place. Use these instead of building fixtures by hand.
-- **A fake solver** is injected into the worker, so runs complete in milliseconds and
-  their outputs are whatever the test says.
-- **Migrations** have their own tests (`test_migrations.py`): a migration that renames or
-  moves data gets a test that upgrades a database holding old rows.
+`tests/helpers.py` does most of the setup for you. It gives each test an in-memory SQLite
+database, a `TestClient` connected to it, a tiny fake MACRO case (`make_case`), and a
+`seeded_world` that already contains scenarios and runs. Please use these rather than building
+fixtures by hand.
 
----
+The worker is given a fake solver, so runs finish in milliseconds and produce whatever outputs
+the test asks for.
 
-## What a good test asserts
+Migrations have their own tests in `test_migrations.py`. A migration that renames or moves
+data should get a test that upgrades a database containing old rows and checks they survived.
 
-| Change | The test must show |
-|---|---|
-| Resolve / scope | **Only** the intended cells change, by the intended amount |
-| Apply | The rebuilt folder matches its recorded hash; an existing input still rebuilds |
-| A service rule | The API refuses the broken case with the right status (400 / 404 / 409) and message |
-| Lock rule | A write to a locked version or sensitivity gets **409** |
-| Soft delete | The row is hidden, restorable from trash, never removed |
-| YAML | Import → export → import is a no-op (`test_yaml_round_trip.py`) |
-| A migration | Upgrade keeps existing rows correct |
+## What a good test checks
 
-"It ran without error" is not a test — the failure mode here is a plausible wrong input.
-Every PR needs a test that fails if the change is reverted.
+The usual way things go wrong here is not a crash. It is a model input that looks reasonable
+but is subtly wrong. So "it ran without errors" does not count as a test. What a test should
+check depends on what you changed:
+
+- **Resolve or scope:** only the intended cells change, and by the intended amount.
+- **Apply:** the rebuilt folder matches its recorded hash, and existing inputs still rebuild.
+- **A service rule:** the API refuses the bad case with the right status (400, 404 or 409)
+  and a useful message.
+- **The lock rule:** writing to a locked version or sensitivity returns 409.
+- **Soft delete:** the row disappears from normal views, can be restored from the trash, and
+  is never actually removed.
+- **YAML:** importing, exporting and importing again changes nothing
+  (see `test_yaml_round_trip.py`).
+- **A migration:** upgrading keeps existing rows correct.
+
+Every pull request should include at least one test that would fail if the change were
+reverted.

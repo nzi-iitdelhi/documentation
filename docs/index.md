@@ -1,23 +1,34 @@
 # NZI Modelling Handbook
 
-Living handbook for the NZI energy-system modelling pipelines (IIT Delhi + Manana Labs).
+This handbook explains how the Net Zero India modelling work is organised, how to run it,
+and how to change it safely. It is written by and for the team at IIT Delhi and Manana
+Labs.
 
-It exists so a new lab member can get productive **without a senior member giving a KT**.
-
-!!! tip "Edit me"
-    Every page has a :material-pencil: icon, top right. Edit in the browser, open a PR.
-    See [Edit this handbook](reference/contributing.md).
-
----
+The aim is simple: a new lab member should be able to get productive by reading these
+pages, without a senior colleague having to sit with them for a day. If you find yourself
+needing that conversation anyway, something is missing here, and we would like you to add
+it. Every page has a pencil icon at the top right that opens it for editing on GitHub
+(see [Edit this handbook](reference/contributing.md)).
 
 ## The two pipelines
 
-| | [Supply-side](supply-side/index.md) | [Demand-side](demand-side/index.md) |
-|---|---|---|
-| Repo | [`supply-side`](https://github.com/nzi-iitdelhi/supply-side) | [`demand-side`](https://github.com/nzi-iitdelhi/demand-side) |
-| Answers | "What if coal capex moves ±5%?" | "How much energy does the residential sector need?" |
-| Core artefact | Scenario version / sensitivity → one MACRO input each, run, results in DuckDB | `run.yaml` → sector pipeline → PIER/RUMI CSVs |
-| Stack | Python (FastAPI) + Next.js + Julia (MacroEnergy.jl) | Python + DuckDB (+ R for residential) |
+The model is built in two halves that live in separate repositories.
+
+The **[supply side](supply-side/index.md)** asks what the cheapest power system looks like
+under different assumptions, for example if coal plants become 5% more expensive to build.
+It keeps scenarios and their versions in a small database, turns each one into an input for
+the MACRO energy model ([MacroEnergy.jl](https://github.com/macroenergy/MacroEnergy.jl)),
+solves it, and stores the results. It is written in Python (FastAPI) with a Next.js web
+interface, and calls Julia to solve.
+
+The **[demand side](demand-side/index.md)** works out how much energy is needed in the first
+place: how many households own an air conditioner, how far people travel, and so on. It
+builds that up from surveys and trends in Python and DuckDB (with some R for the
+residential sector), and produces demand files in the format the
+[RUMI](https://github.com/prayas-energy/Rumi) framework uses.
+
+Demand results feed into the supply model as part of its base case, and both end up as
+MACRO outputs that we compare and chart.
 
 ```text
   demand-side ──┐
@@ -25,35 +36,34 @@ It exists so a new lab member can get productive **without a senior member givin
   supply-side ──┘
 ```
 
----
+## Where to start
 
-## Pick your path
+If you are new, begin with [Start here](getting-started.md). It takes about half a day
+and ends with you reproducing a known result on your own machine.
 
-| You are | Go to |
-|---|---|
-| New here | [Start here](getting-started.md) |
-| Running a scenario | [Supply](supply-side/run-an-experiment.md) · [Demand](demand-side/run-an-experiment.md) |
-| Changing code | [Supply dev](supply-side/developer/index.md) · [Demand dev](demand-side/developer.md) |
-| Merging / releasing | [Supply maint](supply-side/maintainer.md) · [Demand maint](demand-side/maintainer.md) |
-| Approving what goes public | [PI sign-off](pi-signoff.md) |
+After that, go to the page that matches what you are doing:
 
----
+- To run a scenario, read Run an experiment for the
+  [supply side](supply-side/run-an-experiment.md) or the
+  [demand side](demand-side/run-an-experiment.md).
+- To change the code, read the Developer pages:
+  [supply side](supply-side/developer/index.md), [demand side](demand-side/developer.md).
+- To review, merge or release, read the Maintainer pages:
+  [supply side](supply-side/maintainer.md), [demand side](demand-side/maintainer.md).
+- To decide whether a result can be published, read [PI sign-off](pi-signoff.md).
 
-## The three roles
+## Who does what
 
-Hats, not job titles. One person often wears two in a week.
+We talk about three roles. They describe what you are doing at the moment, not your job
+title, and most people take on more than one in a given week.
 
-| Role | Owns |
-|---|---|
-| **Owner / Maintainer** | The repo: merges, releases, integrity of `main` |
-| **Developer** | A change: blast radius, tests, config, the PR |
-| **PI** | What the outside world sees: numbers, claims, licences |
+A **developer** makes a change and is responsible for showing it is safe. A **maintainer**
+looks after a repository: reviewing and merging changes, cutting releases, and keeping
+`main` in a state anyone can trust. The **PI** decides what leaves the team, whether that
+is a figure, a dataset or a paper. [Roles at a glance](roles.md) goes into more detail.
 
-[Roles at a glance →](roles.md)
-
----
-
-!!! warning "This handbook is incomplete on purpose"
-    Seeded from the repos, meeting notes and the FAIR work. It drifts unless the team
-    keeps it honest. Found something wrong? Fix the page, or
+!!! warning "This handbook is unfinished"
+    It was put together from the repositories, meeting notes and the team's FAIR work, and
+    it will drift out of date unless people keep fixing it. If something here is wrong,
+    please correct the page or
     [open an issue](https://github.com/nzi-iitdelhi/documentation/issues).

@@ -1,11 +1,12 @@
 # Runs and results
 
-From a version or sensitivity to rows in DuckDB. This is the ring 3–4 code — read the
-[blast radius](index.md#blast-radius) first.
+This page follows a version or sensitivity from the moment it is generated to the moment its
+results are rows in DuckDB. Most of this code is ring 3 or 4, so read about
+[blast radius](index.md#blast-radius) before changing it.
 
----
+## Generating a model input
 
-## Generation
+Generation happens in four steps:
 
 ```text
   version / sensitivity
@@ -16,86 +17,92 @@ From a version or sensitivity to rows in DuckDB. This is the ring 3–4 code —
                         and the hash of the folder it builds
 ```
 
-| Code | Does |
+First, the params are **resolved** into a list of cell changes. Each change names a file, a
+row, a field, and the old and new values. For a sensitivity this happens once per combination
+of amounts, and every combination is **checked** before anything is stored. The final cell
+values, together with the base case's content hash, are then hashed into a **fingerprint**. If
+a macro input with that fingerprint already exists, it is reused. Otherwise a new one is
+stored with its cell changes and the hash of the folder it produces.
+
+Because of this, identical inputs are only stored once. If two versions end up changing the
+same cells to the same values, they share a macro input, and `macro_input_source` records
+which versions asked for it.
+
+The code is spread over a few files:
+
+| File | What it does |
 |---|---|
-| `macro_inputs/resolve.py` | Params → cell changes; sensitivity combinations; fingerprint |
-| `macro_inputs/apply.py` | Writes cell changes into the base files' text |
-| `macro_inputs/services.py` | `generate_version`, `generate_sensitivity`, `rebuild` |
-| `library/arithmetic.py` | `scale`, `add`, `set` |
+| `macro_inputs/resolve.py` | Turns params into cell changes, builds sensitivity combinations, and computes the fingerprint |
+| `macro_inputs/apply.py` | Writes cell changes into the text of the base files |
+| `macro_inputs/services.py` | `generate_version`, `generate_sensitivity` and `rebuild` |
+| `library/arithmetic.py` | The `scale`, `add` and `set` operations |
 
-Identical inputs are stored once: two versions that end up changing the same cells to the
-same values share one macro input (`macro_input_source` records who asked for it).
-
-`rebuild` recreates the folder from the stored base files + cell changes, and **refuses**
-if the result does not match the recorded folder hash (it writes an `integrity_failed`
-event). That check is what makes a past run trustworthy — do not weaken it.
-
----
+`rebuild` recreates an input folder from the stored base files and cell changes, and refuses
+if the result does not match the recorded folder hash. When that happens it writes an
+`integrity_failed` event. This check is what lets us trust that a past run can be reproduced,
+so please do not weaken it.
 
 ## The worker
 
-One worker per deployment, started inside the API process (`make api`) or alone
-(`make worker`). It claims queued runs, oldest batch first.
+There is one worker per deployment. It runs inside the API process when you start `make api`,
+or on its own with `make worker`. It picks up queued runs, oldest batch first.
 
-| Limit | Set by |
-|---|---|
-| Runs at once, overall | `SUPPLY_MAX_PARALLEL` (default 4) |
-| Runs at once, per batch | The concurrency chosen when pressing Run; *auto* uses free memory, half the CPUs and the largest run's peak memory so far |
+Two limits control how many runs happen at once. `SUPPLY_MAX_PARALLEL` (default 4) caps the
+total. Each batch also has its own limit, which is the concurrency chosen when someone pressed
+Run. If that was left on *auto*, the worker picks a number based on free memory, half the
+CPUs, and the largest peak memory any run has used so far.
 
-Each run goes through named steps; a failure records which one:
+Each run goes through five named steps, and if a run fails, the run records which step it
+failed in:
 
-| Step | Does |
-|---|---|
-| `materialize` | `rebuild` the macro input into `runs/<run_id>/case/` |
-| `manifest` | Record everything needed to recreate the run (below) |
-| `solve` | Shrink to `periods`/`subperiods` if asked, then Julia + MacroEnergy.jl `run_case`; log to `runs/<run_id>/solver.log` |
-| `load_results` | Every result CSV into DuckDB; catalogue rows in `run_result` |
-| `finish` | Objective, termination status, wall time, peak memory; log stored gzipped in `run_log` |
+1. **materialize** rebuilds the macro input into `runs/<run_id>/case/`.
+2. **manifest** records everything needed to recreate the run (see below).
+3. **solve** shrinks the case to the requested `periods` and `subperiods` if any were given,
+   then runs Julia and MacroEnergy.jl's `run_case`. The log goes to `runs/<run_id>/solver.log`.
+4. **load_results** loads every result CSV into DuckDB and lists them in `run_result`.
+5. **finish** records the objective, termination status, wall time and peak memory, and stores
+   a gzipped copy of the log in `run_log`.
 
-A run left `running` by a dead worker becomes `failed` with error `interrupted` when the
-worker next starts.
-
----
+If the worker dies while a run is in progress, that run is marked `failed` with the error
+`interrupted` the next time the worker starts.
 
 ## The manifest
 
-Stored on the run, written to `manifest.json` by `recreate`:
+The manifest is stored on the run, and `recreate` writes it out as `manifest.json`. It
+records:
 
-| Field | Why |
-|---|---|
-| `base_content_hash` | Which base case |
-| `macro_input_fingerprint`, `folder_hash` | Exactly which input, and its integrity check |
-| `code_commit`, `code_dirty` | Which code — a dirty tree is recorded, not refused |
-| `julia_version`, `macroenergy_version` | Which model |
-| `solver` | `HiGHS` |
-| `options` | `periods`, `subperiods`, and the like |
-| `alembic_head`, `app_version` | Which database schema and app |
+- `base_content_hash`, the base case that was used;
+- `macro_input_fingerprint` and `folder_hash`, which identify the exact input and let it be
+  checked;
+- `code_commit` and `code_dirty`, the code that ran and whether it had uncommitted changes;
+- `julia_version` and `macroenergy_version`, the model versions;
+- `solver`, which is `HiGHS`;
+- `options`, such as `periods` and `subperiods`;
+- `alembic_head` and `app_version`, the database schema and app version.
 
-A run with `code_dirty: true` cannot be reproduced from git alone. Fine for a try-out; not
-for anything going to [PI sign-off](../../pi-signoff.md).
-
----
+A dirty working tree is recorded rather than refused. That is fine while you are trying
+things out, but a run with `code_dirty: true` cannot be reproduced from git alone, so it should
+not go to [PI sign-off](../../pi-signoff.md).
 
 ## Results
 
-`results/store.py` defines `ResultStore`; `results/duckdb_store.py` is the only
-implementation. One table per result name (`r_capacity`, `r_costs` …), keyed by `run_id`
-and `period`, plus a `run_context` table to join on.
+`results/store.py` defines the `ResultStore` interface, and `results/duckdb_store.py` is its
+only implementation. Each kind of result gets its own table (`r_capacity`, `r_costs` and so
+on), with `run_id` and `period` columns added, and a separate `run_context` table describes
+each run so you can join on it.
 
-- DuckDB allows **one process per file**: the API owns `results.duckdb` while it runs.
-  Anything else (`run --wait`, a notebook) needs the API stopped, or goes through
-  `GET /api/results/<name>`.
-- Add a new result query to the store or an API endpoint, not as raw DuckDB access in a
-  router.
-
----
+DuckDB only allows one process to open a file at a time, and the API holds `results.duckdb`
+while it is running. Anything else that needs the results, such as `run --wait` or a
+notebook, either has to wait until the API is stopped or go through
+`GET /api/results/<name>`. If you need a new kind of query, add it to the store or as an API
+endpoint, rather than opening DuckDB directly from a router.
 
 ## Julia and MacroEnergy.jl
 
-The solver call is `$SUPPLY_JULIA -e 'using MacroEnergy; run_case(ARGS[1])' <case>`, with
-`JULIA_PROJECT` set to `SUPPLY_JULIA_ENV`.
-Install once per machine — `docs/how_to_run/run-macro-with-highs.md` in the repo — and
-point `SUPPLY_JULIA` / `SUPPLY_JULIA_ENV` at it if it is not in `../.deps/`.
+The worker solves a case by running `$SUPPLY_JULIA -e 'using MacroEnergy; run_case(ARGS[1])' <case>`,
+with `JULIA_PROJECT` set to `SUPPLY_JULIA_ENV`. You install these once per machine by
+following `docs/how_to_run/run-macro-with-highs.md` in the repository. If they end up
+somewhere other than `../.deps/`, set `SUPPLY_JULIA` and `SUPPLY_JULIA_ENV` to point at them.
 
-Tests inject a fake solver (`runs/solver.py` takes a `Solver`), so `make test` needs no
-Julia.
+The tests swap in a fake solver (`runs/solver.py` accepts any `Solver`), so `make test` does
+not need Julia.

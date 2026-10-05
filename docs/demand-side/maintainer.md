@@ -1,114 +1,101 @@
 # Maintainer (demand-side)
 
-You own the repo, CI, the central-server relationship, and the integrity of the numbers.
+The demand-side maintainer looks after the repository, CI, the central server, and above all
+the trustworthiness of the numbers. A good way to judge whether things are healthy: can
+someone clone the repository, follow [Start here](../getting-started.md), and reproduce the
+reference match rates?
 
-Success: **anyone can clone, follow [Start here](../getting-started.md), and reproduce the
-reference match rates.**
+## Reviewing a pull request
 
----
+Start from the developer's [PR checklist](developer.md#pr-checklist).
 
-## Reviewing a PR
+For every pull request, check that the ring it claims matches the diff as you read it, that
+`bash scripts/test.sh all` and `ruff check tests` pass, and that there is a test that would
+fail if the change were reverted. Nothing should be committed from the reference folders, and
+no `.duckdb` files or output CSVs.
 
-Start from the [Developer checklist](developer.md#pr-checklist).
+For **pipeline or engine changes** (ring 3 and above), the pull request should show the match
+rates against the professor's validators before and after. They should have improved; if they
+got worse, the reason should be explained and you should agree to accept it. Changes to
+`pier_db/` should explain how they stay identical to RUMI, with a reference to the RUMI
+source.
 
-**Always**
+!!! danger "Green tests do not prove the numbers are right"
+    The golden manifests record what our code produces today, known errors included. The test
+    suite only catches changes nobody intended. The validator match rate is what you are
+    really reviewing.
 
-- [ ] Blast-radius ring stated, matching the diff as *you* read it
-- [ ] `bash scripts/test.sh all` passes
-- [ ] `ruff check tests` passes
-- [ ] No `.duckdb`, no output CSVs, nothing from the reference folders committed
-- [ ] A test exists that fails if reverted
-
-**Ring 3+ (pipeline step or engine)**
-
-- [ ] Before/after match rates vs the professor's validators in the PR body
-- [ ] Rates got **better**, or the regression is explained and accepted
-- [ ] `pier_db/` changes state how they stay RUMI-identical, citing the RUMI source
-
-!!! danger "Green tests are not evidence of correctness here"
-    Golden manifests encode our current output, known errors included. The **validator
-    match rate** is what you review; the test suite only catches *unintended* change.
-
-**Ring 5 (regenerating golden manifests)** — highest-risk change in the repo, because it
-makes the regression test agree with the new behaviour by construction.
-
-- [ ] The maths change was intended and is described in plain words
-- [ ] Every changed value can be explained
-- [ ] Validators improved
-- [ ] Known-diffs list and `CLAUDE.md` updated
-- [ ] PI informed if any published number moves
-
----
+**Regenerating golden manifests** (ring 5) is the riskiest change in the repository, because it
+makes the regression test agree with the new behaviour by construction. Only accept it when the
+change to the maths was intended and is described in plain words, every changed value can be
+explained, the validators improved, the known-discrepancies list and `CLAUDE.md` have been
+updated, and the PI has been told if any published number moves.
 
 ## Merging
 
-- **Squash merge.** One logical change, one commit.
-- Branch protection on `main` and `op_dev`: CI green, review required, no direct pushes.
-  `CODEOWNERS` alone does **not** block merges — the protection rule does.
-- `CODEOWNERS` currently has placeholder handles (`@maintainer`,
-  `@iitd-residential-team`, `@prayas-transport-team`, `@frontend-owner`). Replace with real
-  usernames or review routing is decorative.
+We squash-merge, so each logical change is one commit. `main` and `op_dev` are protected:
+CI has to pass, a review is required, and nobody can push directly. Note that `CODEOWNERS` on
+its own does not block a merge; the branch protection rule does.
 
----
+`CODEOWNERS` still contains placeholder handles (`@maintainer`, `@iitd-residential-team`,
+`@prayas-transport-team`, `@frontend-owner`). Until they are replaced with real usernames,
+review requests do not reach anyone.
 
 ## CI
 
-`.github/workflows/ci.yml`: lint + unit + integration on PRs into `main`, `op_dev`,
-`storyline`; docker-build on push to `main`. In-flight runs cancel on fix-up commits.
+`.github/workflows/ci.yml` runs lint, unit tests and integration tests on pull requests into
+`main`, `op_dev` and `storyline`, and a Docker build on every push to `main`. A run in progress
+is cancelled when a new commit is pushed to the same pull request.
 
-- [ ] Green on `main`, not "green except the advisory step nobody reads"
-- [ ] Advisory `ruff check nzi_pipeline pier_db` count is trending **down**. Allowed to
-      fail today; not allowed to grow. Make the cleanup someone's task.
-- [ ] Integration tests still run in ~1 minute. Past a few minutes, people stop running
-      them locally and CI becomes the only check.
-
----
+Keep an eye on three things. CI should be genuinely green on `main`, including the advisory
+step. The advisory warning count from `ruff check nzi_pipeline pier_db` should be going down;
+it is allowed to fail today, but it should not grow, and someone should own cleaning it up.
+And the integration tests should keep running in about a minute. Once they take several
+minutes, people stop running them locally and CI becomes the only check.
 
 ## Releases
 
-Rules: [Provenance](../principles/provenance.md#versioning-the-pipeline).
+The versioning rules are on the [Provenance](../principles/provenance.md#versioning-the-pipeline)
+page. Before tagging a release:
 
-- [ ] `bash scripts/test.sh all` passes on a **fresh clone**
-- [ ] Validator match rates in the release notes
-- [ ] Known-diffs list current
-- [ ] Docker build succeeds
-- [ ] Annotated semantic tag
-- [ ] Outputs changed? Stated at the top of the notes, with PI sign-off
-- [ ] Citable? Mint a **DOI**
+- [ ] `bash scripts/test.sh all` passes on a fresh clone
+- [ ] the validator match rates are in the release notes
+- [ ] the known-discrepancies list is current
+- [ ] the Docker build succeeds
+- [ ] the tag is an annotated semantic version
+- [ ] if outputs changed, the release notes say so at the top, with PI sign-off
+- [ ] if the release will be cited, a DOI has been minted from it
 
 !!! tip
-    Your machine has R, a warm venv, a seed DB and a working Python 3.12. A new student has
-    none of those, and the 3.13 trap catches almost everyone. Verify on something clean.
-
----
+    Your own machine has R, a warmed-up virtual environment, a seed database and a working
+    Python 3.12. A new student has none of these, and the Python 3.13 problem catches almost
+    everyone. Test releases on a clean machine.
 
 ## The central server
 
-EC2, address in the repo README, sleeps when idle, woken by the CLI.
-
-- [ ] Reachable, and the wake path works from cold
-- [ ] Pushed runs are listable and pullable by others
-- [ ] The URL in the README and [Start here](../getting-started.md) is current — both
-      change in the same PR
-
----
+The central server is an EC2 machine; its address is in the repository README. It sleeps when
+nobody is using it, and the command line wakes it up. Check from time to time that it can be
+reached and woken from cold, that pushed runs can be listed and pulled by others, and that the
+URL in the README and on [Start here](../getting-started.md) is correct. If the URL changes,
+update both in the same pull request.
 
 ## Access and onboarding
 
-- [ ] Minimum viable access; write access is not the default
-- [ ] Added to the right `CODEOWNERS` team
-- [ ] Pointed at [Start here](../getting-started.md), not walked through it
-- [ ] Warned about Python 3.13 and the R dependency before they lose an afternoon
-- [ ] First PR is against this handbook
-
----
+Give new people the least access that lets them do their work; write access is not the
+default. Add them to the right `CODEOWNERS` team, and point them at
+[Start here](../getting-started.md) rather than walking them through it. Warn them about Python
+3.13 and the R dependency before they lose an afternoon to either, and ask them to make their
+first pull request a fix to this handbook.
 
 ## Monthly health check
 
-- [ ] Fresh clone → [Start here](../getting-started.md) → match rates reproduce
-- [ ] Validator match rates have not silently regressed
-- [ ] Advisory lint count has not grown
-- [ ] Central server awake and reachable
+Once a month, check that:
+
+- [ ] a fresh clone, following [Start here](../getting-started.md), reproduces the match rates
+- [ ] the validator match rates have not quietly got worse
+- [ ] the advisory lint count has not grown
+- [ ] the central server is awake and reachable
 - [ ] `CODEOWNERS` has real handles
-- [ ] No open PR older than two weeks
-- [ ] `CLAUDE.md`, known-diffs list and this handbook agree with each other and reality
+- [ ] no pull request has been open for more than two weeks
+- [ ] `CLAUDE.md`, the known-discrepancies list and this handbook agree with each other and
+      with reality

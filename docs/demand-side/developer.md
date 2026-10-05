@@ -1,61 +1,63 @@
 # Developer (demand-side)
 
-Changing the pipeline, the engine, the frontend, or the tests.
+This page is for anyone changing the demand-side pipeline, the engine, the web interface or
+the tests.
 
-Defining constraint: **`pier_db/` must stay numerically identical to
-[RUMI](https://github.com/prayas-energy/Rumi).** Most rules follow from that.
-
----
+One requirement shapes almost everything here: **`pier_db/` must give numerically identical
+results to [RUMI](https://github.com/prayas-energy/Rumi).** Most of the rules below follow
+from that.
 
 ## Blast radius
 
-| Ring | Touching | Changes a published number? | Required |
-|---|---|---|---|
-| **1 Cosmetic** | Docs, comments, lint fixes | No | `ruff check tests` |
-| **2 Local** | Frontend screen, a script, a test | No | Unit tests |
-| **3 Pipeline step** | `s0*_*.py`, parameter computation, export | **Yes** | Full suite + validators vs professor + match-rate comparison |
-| **4 Engine** | `pier_db/` demand maths, RUMI formulas | **Yes, everywhere** | Ring 3 + how it stays RUMI-identical + maintainer review |
-| **5 Data / schema** | Seed data, DuckDB schema, golden manifests | **Yes, silently** | Ring 4 + regenerated fixtures + PI informed |
+Before you start, work out how far your change could reach. That decides how much you need to
+prove before it merges.
 
-**How to measure it** — run the validators before and after. The **match rate** is the
-number that matters:
+| Ring | What you are touching | Can it change a published number? | What you need to show |
+|---|---|---|---|
+| 1. Cosmetic | Docs, comments, lint fixes | No | `ruff check tests` passes |
+| 2. Local | A web interface screen, a script, a test | No | The unit tests pass |
+| 3. Pipeline step | `s0*_*.py`, parameter computation, export | Yes | The full suite, the validators against the reference, and a comparison of match rates |
+| 4. Engine | The demand maths in `pier_db/`, RUMI formulas | Yes, everywhere | Ring 3, plus an explanation of how it stays identical to RUMI, and maintainer review |
+| 5. Data or schema | Seed data, the DuckDB schema, golden manifests | Yes, without anyone noticing | Ring 4, plus regenerated fixtures, and the PI told |
+
+To measure the effect of a change, run the validators before and after it. The **match rate**
+against the reference is the number that matters:
 
 ```bash
 cd General/Residential_Sector_Data/Residential_Workflow_FromInput
 python validate_parameters_keyed.py && python validate_demand_keyed.py && python compare_outputs.py
 ```
 
-!!! danger "'Tests pass' is not evidence for ring 3+"
-    Golden manifests encode *our current* output, known errors included. They can stay
-    green while you drift further from the reference. Record before/after match rates.
+!!! danger "Passing tests are not enough for ring 3 and above"
+    The golden manifests record what our code produces today, known errors included. They can
+    stay green while you drift further away from the reference. Record the match rates before
+    and after your change.
 
----
+## Keeping the engine identical to RUMI
 
-## Keeping RUMI identical
-
-Work from the RUMI source, not intuition. For orientation only — the source is authoritative:
+Work from the RUMI source code rather than from intuition. The formulas below are only a guide
+to find your way around; the source is the authority.
 
 | Quantity | Formula |
 |---|---|
 | Demand | `NC × NI × ES_Demand × UP × TSR × ELS × SEC`, summed over efficiency levels and STC combinations |
 | GT profile | `demand × GT / sum(GT × days_in_season)` |
 | Season energy demand | `EnergyDemand × DayTypeWeight × NumDaysInSeason` |
-| `seasons_size` | Reference year 2019 (non-leap, 365 days) |
+| `seasons_size` | Uses 2019 as the reference year (not a leap year, 365 days) |
 
-!!! warning "A cleaner formula is a different formula"
-    Floating-point association order is part of the contract — `ST_SEC` already carries
-    126K value diffs from stock-flow FP drift. Reordering operations is a behaviour change.
-
----
+!!! warning "A tidier formula is a different formula"
+    The order in which floating-point operations happen is part of what has to match.
+    `ST_SEC` already has 126K value differences caused by floating-point drift in the
+    stock-flow calculation. Reordering operations changes behaviour, even if the maths looks
+    the same on paper.
 
 ## Read-only reference folders
 
 Never write to `General/Residential_Sector_Data/Parameters/` or `PIER/Scenarios/`.
 
-**Corollary:** generate every static file in the pipeline (`s06_export.py`). Never copy one
-from the professor's folder — a copied file looks like agreement and proves nothing.
-
----
+It follows that every static file in the pipeline should be generated (in `s06_export.py`),
+never copied from the professor's folder. A copied file will always agree with the reference,
+so it proves nothing.
 
 ## Tests
 
@@ -63,79 +65,75 @@ from the professor's folder — a copied file looks like agreement and proves no
 bash scripts/test.sh all | unit | integration
 ```
 
-| Suite | Covers |
+| Suite | What it covers |
 |---|---|
-| `tests/unit/` | In-memory DuckDB: `edit`, `snapshot`, `_quote`, `pier_db` static maps |
-| `test_db_lifecycle.py` | DB wrapper, persistence, read-only mode |
-| `test_real_db_smoke.py` | Auto-skips if `residential.duckdb` missing or locked |
-| `test_pipeline_on_fixture.py` / `test_transport_...` | Full pipeline e2e on tiny fixtures |
-| `test_manifest_check.py` | Golden-output regression, `1e-6` rel tolerance |
+| `tests/unit/` | In-memory DuckDB: `edit`, `snapshot`, `_quote`, and the static maps in `pier_db` |
+| `test_db_lifecycle.py` | The database wrapper, persistence, and read-only mode |
+| `test_real_db_smoke.py` | Skips itself if `residential.duckdb` is missing or locked |
+| `test_pipeline_on_fixture.py`, `test_transport_...` | The full pipeline end to end, on small fixtures |
+| `test_manifest_check.py` | Regression against the golden outputs, at a relative tolerance of `1e-6` |
 
-Fixtures: Parquet slices of the real DB (region NR, sub-geo DL), 1.5 MB, in
-`tests/fixtures/{residential,transport}_min/`.
+The fixtures are small Parquet extracts of the real database (region NR, sub-geography DL),
+1.5 MB in total, kept in `tests/fixtures/{residential,transport}_min/`.
 
 ### Regenerating fixtures and golden manifests
 
 ```bash
 python scripts/build_residential_fixture.py
 python scripts/build_transport_fixture.py
-python scripts/build_manifest.py residential   # ONLY after an intentional maths change
+python scripts/build_manifest.py residential   # only after an intentional change to the maths
 ```
 
-!!! danger "Regenerating a manifest is a claim, not a chore"
-    It overwrites golden outputs with whatever your code now produces — the test then
-    passes by definition. Before running it:
+!!! danger "Regenerating a manifest changes what counts as correct"
+    `build_manifest.py` overwrites the golden outputs with whatever your code produces now,
+    so the test will pass by definition afterwards. Only run it when:
 
-    - [ ] You **intended** to change the numbers
-    - [ ] You can explain every changed value
-    - [ ] Validators vs the professor got **better**, not just different
-    - [ ] Before/after match rates are in the PR body
-    - [ ] A maintainer agreed — this is not a developer decision
-
----
+    - [ ] you meant to change the numbers
+    - [ ] you can explain every value that changed
+    - [ ] the validators against the reference got better, not just different
+    - [ ] the before-and-after match rates are in the pull request description
+    - [ ] a maintainer has agreed, because this is not a decision for the developer alone
 
 ## Lint
 
-`tests/` is **required**; `nzi_pipeline/` and `pier_db/` are **advisory** (~140 existing
-warnings, logged but non-blocking).
+Lint is required to pass for `tests/`. For `nzi_pipeline/` and `pier_db/` it is advisory for
+now: there are about 140 existing warnings, which are logged but do not block a merge.
 
 ```bash
 ruff check tests                    # must pass
-ruff check nzi_pipeline pier_db     # advisory today
+ruff check nzi_pipeline pier_db     # advisory for now
 ```
 
-Clean warnings in the code you touched. Do not mix a repo-wide lint PR with a behaviour change.
-
----
+Fix the warnings in code you touch, but keep repository-wide lint clean-ups in their own pull
+request, separate from any change in behaviour.
 
 ## Branches
 
-`main`, `op_dev` and `storyline` all exist and CI runs on PRs into each. Most current work
-is on `main_dev` — confirm your target with your maintainer.
+`main`, `op_dev` and `storyline` all exist, and CI runs on pull requests into each of them.
+Most current work happens on `main_dev`, so check with your maintainer which branch to target.
 
----
+## Things to avoid
 
-## Never OK
-
-- Writing into the professor's reference folders
-- Copying a static file instead of generating it
-- Regenerating golden manifests to make a failing test pass
-- "Simplifying" a RUMI formula
-- Committing a `.duckdb` file
-- Holding a DB connection across jobs in the frontend (`_release_db` in `frontend/app.py`)
-
----
+- Writing into the professor's reference folders.
+- Copying a static file instead of generating it.
+- Regenerating golden manifests to make a failing test pass.
+- "Simplifying" a RUMI formula.
+- Committing a `.duckdb` file.
+- Holding a database connection across jobs in the web interface (see `_release_db` in
+  `frontend/app.py`).
 
 ## PR checklist
 
-- [ ] Blast-radius ring stated
+Before asking for review, check that:
+
+- [ ] the pull request says which ring the change is in
 - [ ] `bash scripts/test.sh all` passes
 - [ ] `ruff check tests` passes
-- [ ] Ring 3+: before/after match rates in the PR body
-- [ ] Golden manifests regenerated only with justification + maintainer agreement
-- [ ] Fixtures regenerated if the schema changed
-- [ ] A test exists that fails if this change is reverted
-- [ ] Known-diffs list updated if your change moved one
-- [ ] Handbook updated if a documented workflow changed
+- [ ] for ring 3 and above, the before-and-after match rates are in the description
+- [ ] golden manifests were only regenerated with a justification and a maintainer's agreement
+- [ ] fixtures were regenerated if the schema changed
+- [ ] there is a test that would fail if the change were reverted
+- [ ] the known-discrepancies list is updated if your change moved one of them
+- [ ] this handbook is updated if a documented workflow changed
 
-→ [Maintainer](maintainer.md)
+The [Maintainer](maintainer.md) page describes what happens next.
