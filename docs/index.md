@@ -16,8 +16,8 @@ It exists so a new lab member can get productive **without a senior member givin
 |---|---|---|
 | Repo | [`supply-side`](https://github.com/nzi-iitdelhi/supply-side) | [`demand-side`](https://github.com/nzi-iitdelhi/demand-side) |
 | Answers | "What if coal capex moves ±5%?" | "How much energy does the residential sector need?" |
-| Core artefact | Experiment YAML → one MACRO case per sensitivity | `run.yaml` → sector pipeline → PIER/RUMI CSVs |
-| Stack | Python + Julia (MacroEnergy.jl) | Python + DuckDB (+ R for residential) |
+| Core artefact | Scenario version / sensitivity → one MACRO input each, run, results in DuckDB | `run.yaml` → sector pipeline → PIER/RUMI CSVs |
+| Stack | Python (FastAPI) + Next.js + Julia (MacroEnergy.jl) | Python + DuckDB (+ R for residential) |
 
 ```text
   demand-side ──┐
@@ -33,7 +33,7 @@ It exists so a new lab member can get productive **without a senior member givin
 |---|---|
 | New here | [Start here](getting-started.md) |
 | Running a scenario | [Supply](supply-side/run-an-experiment.md) · [Demand](demand-side/run-an-experiment.md) |
-| Changing code | [Supply dev](supply-side/developer.md) · [Demand dev](demand-side/developer.md) |
+| Changing code | [Supply dev](supply-side/developer/index.md) · [Demand dev](demand-side/developer.md) |
 | Merging / releasing | [Supply maint](supply-side/maintainer.md) · [Demand maint](demand-side/maintainer.md) |
 | Approving what goes public | [PI sign-off](pi-signoff.md) |
 

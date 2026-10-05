@@ -1,121 +1,162 @@
 # Run an experiment (supply-side)
 
-Define a scenario, run it, read results. No generator internals needed.
+Define a scenario change, run it, read results. No backend internals needed.
 
-If your change is not expressible in a YAML file, go to [Developer](developer.md).
+Two kinds of experiment, kept apart on purpose:
+
+| | Exploration | Sensitivity |
+|---|---|---|
+| Is | A new **version** of a scenario, being tried out | Variations **around the active version** |
+| Built from | Exploration params — one parameter, one operation, **one amount**, a scope | Sensitivity params — one parameter, one operation, **a list of amounts**, a scope |
+| Gives | One MACRO input | One MACRO input per combination of amounts |
+| For | Convincing the PIs the scenario is right | Showing robustness in the paper |
+
+If your change is not expressible as a parameter, an operation (scale, add or set) and a
+scope, go to [Developer](developer/index.md).
 
 ---
 
 ## Before you start
 
 - [ ] `make test` passes on a clean checkout
-- [ ] `make tracking-check` passes
-- [ ] You can state which base-case version you are deriving from
+- [ ] `make run-local` is up: UI at <http://127.0.0.1:3000>, API at `:8002`
+- [ ] You know which scenario and which version you are deriving from
 
-!!! danger "If `tracking-check` fails, stop"
-    Your base case has drifted; every number will be incomparable with everyone else's.
-    Run `make tracking-report` and take it to your maintainer. Do **not** run
-    `tracking-lock` to make the error go away.
+!!! warning "Runs are switched off in the UI right now"
+    `RUNS_ENABLED = false` in `web/lib/api.ts`: every Run button opens a *Runs are
+    disabled* dialog. You can still create and edit everything. To solve, use the CLI
+    (step 4) or ask your maintainer.
 
 ---
 
-## 1. Write the experiment YAML
+## 1. Pick or create the scenario
 
-Lives in `experiments/`, **committed**. It is the permanent record
-([principle 3](../principles/index.md)).
+**Scenarios** lists them; **New scenario** creates one. A scenario is a storyline (the
+reference, a net zero path); the project has four. Most experiments are a new version or
+a sensitivity of an existing one, not a new scenario.
 
-```yaml
-label: reference_demand_supply_sensitivities
-scenario_label: reference-demand
+---
 
-# Demand remains an opaque part of the approved native case.
-data_demand_side: data/base-case
-data_supply_side: data/base-case/supply
+## 2a. Exploration: a new version
 
-sweep_params:
-  - nr_onshore_wind_investment_cost
-  - nr_coal_max_capacity
-validate: supply_case
-```
+On the scenario page, **Add exploration** starts a draft version from a locked version or
+from the base — never from another draft. Then **Add exploration param**:
 
 | Field | Meaning | Getting it wrong |
 |---|---|---|
-| `label` | Names the experiment; becomes `runs/<label>/` | Collisions overwrite someone's results |
-| `scenario_label` | The demand scenario this pairs with | Sensitivities attributed to the wrong demand future |
-| `data_demand_side` / `data_supply_side` | Paths into the staged case | — |
-| `sweep_params` | **Names of registered sweeps**, not inline values | Unregistered name fails at generate time — that is the point |
-| `validate` | Which validator set runs | Invalid cases reach the solver and waste hours |
+| Parameter | The knob, from the **Parameters** library (e.g. *Coal investment cost*) | — |
+| Operation | `scale`, `add` or `set` | `add 1.05` where you meant `scale 1.05` |
+| Amount | One number | Units: the library shows the parameter's unit |
+| Scope | File pattern, id pattern, periods | Too broad matches cells you did not mean — the output still looks plausible |
 
-**Checklist**
+**Review →** compares the version with its parent cell by cell. Read it.
 
-- [ ] `label` unique and descriptive of the experiment, not the author
-- [ ] Every `sweep_params` name is registered (if not → [Developer](developer.md))
-- [ ] `validate` is set
-- [ ] Committed **before** the run, not after
+- [ ] Only the cells you meant changed, by the amount you meant
+- [ ] The cell count is what you expected (scope too broad or too narrow shows up here)
+- [ ] The version's message says what changed in one sentence
 
-Worked examples: `experiments/sensitivity_01_coal_plus5pct.yaml` through `16`.
+## 2b. Sensitivity: around the active version
+
+On the scenario page, **New sensitivity on v*N*** attaches it to the active version. Add
+sensitivity params from the library (or **Create sensitivity param** if none fits).
+**Review & run →** shows every combination before anything runs.
+
+- [ ] Number of combinations is what you expected — it multiplies
+- [ ] Each sensitivity param is named for what it varies (`standard_coal_cost`)
 
 ---
 
-## 2. Generate configs
+## 3. The lock rule
 
-```bash
-make configs EXPERIMENT=experiments/your_experiment.yaml
+A draft version or sensitivity is editable, and every edit is recorded. It **locks** when
+its first run is queued (a version also when first marked active), and never changes
+after that. To change something locked: a new version from it, or **Duplicate** the
+sensitivity.
+
+This is what makes a result traceable — the thing that ran is exactly the thing on record.
+
+---
+
+## 4. Run
+
+| Want | How |
+|---|---|
+| Run a version or sensitivity | **Run** in the UI (when enabled) — choose concurrency |
+| Same, from the terminal, API up | `uv run python -m supply_side run <scenario-number>` — the API's worker solves it |
+| Solve right here, API stopped | `uv run python -m supply_side run <n> --wait` |
+| Small, fast check | add `--periods 2 --subperiods 2` |
+
+`run` queues the scenario's **active** version. Runs are independent
+([principle 7](../principles/index.md)); each gets `runs/<run_id>/` with its MACRO folder
+and solver log. **Runs** shows the newest 200 with status, log, cancel and retry.
+
+Solving needs Julia + MacroEnergy.jl: see `docs/how_to_run/run-macro-with-highs.md`, and
+point `SUPPLY_JULIA` / `SUPPLY_JULIA_ENV` at them if they are not in `../.deps/`.
+
+**Mark active** a version once it has a successful run and the PIs agree. At most one
+active version per scenario; the old one becomes *retired*.
+
+---
+
+## 5. Read the results
+
+Each version page shows its runs and a chart of its results. For your own analysis:
+
+```sql
+SELECT * FROM r_capacity JOIN run_context USING (run_id)
 ```
 
-Wipes `runs/`, writes one complete config per sensitivity point.
+While the API is up it owns `results.duckdb`, so query through `GET /api/results/<name>`
+instead; open DuckDB directly only with the API stopped.
 
-!!! tip "Make small ones to read them"
-    A config carries the whole case, so it is as large as the case.
-    ```bash
-    make configs CONFIG_PERIODS=2 CONFIG_SUBPERIODS=2
-    ```
-    Regenerate at full size before running for real.
-
-**Check before burning compute**
-
-- [ ] Expected number of configs under `runs/<label>/`
-- [ ] `make check-case` passes
-- [ ] Diff two neighbouring sensitivities — **only** the swept cells differ
-
-That last check catches most mistakes.
-
----
-
-## 3. Run
-
-| Want | Command |
-|---|---|
-| Cheap local validation, no licence | `make sample` |
-| Full local run | `make run` |
-| One scenario | `make sensitivity-run SCENARIO=01` |
-| All 16 + base, 3 at a time | `make run-scenarios PARALLEL=3` |
-
-Logs and profiling land in `batch_runs/<run id>/`. Runs are independent
-([principle 7](../principles/index.md)), so nothing is lost by running fewer at once.
-
----
-
-## 4. Read the results
-
-- [ ] Every expected run completed — a missing run is a result, find out why
+- [ ] Every expected run is `done` — a `failed` run is a result, read its log
 - [ ] Objective values finite and plausible (see `INF_FIX_CHANGELOG.md`)
 - [ ] The **base case reproduces its known reference value** — if the base moved, every
       sensitivity is measured from the wrong origin
-- [ ] Each result joined to its manifest before charting
-
-Start from the team's tornado workflow (`docs/images/tornado.py`) rather than new plotting code.
+- [ ] Each result joined to `run_context` before charting, never matched by file name
 
 ---
 
-## 5. Record
+## 6. Record
 
-- [ ] Experiment YAML committed and pushed
-- [ ] Base-case version recorded with the results
-- [ ] Run IDs and manifests preserved even if bulk outputs are deleted ([FAIR A2](../principles/fair.md))
-- [ ] You can state in one sentence what changed vs the base case, matching the YAML diff
+The database is the record; you mostly need to not break the chain.
+
+- [ ] Version message and sensitivity name say what changed
+- [ ] Export what you are reporting: `uv run python -m supply_side yaml export <n> --out defs/`
+- [ ] Run IDs kept with any figure — `recreate <run_id>` rebuilds the exact input from them
+- [ ] You can state in one sentence what changed vs the base case, matching the review
 
 Going to a slide, partner, or paper? → [PI sign-off](../pi-signoff.md).
+
+---
+
+## YAML instead of the UI
+
+A version or sensitivity can be written as YAML and imported; importing an unchanged file
+is a no-op.
+
+```yaml
+# examples/yaml/nz_a_v1.yaml — a version
+scenario: nz_a
+description: Net zero A
+message: coal investment cost up 5%
+exploration_params:
+  - parameter: Coal investment cost
+    scale: 1.05
+    where: {id: "*_coal"}
+```
+
+```yaml
+# examples/yaml/nz_a_robustness.yaml — a sensitivity; v1 must be active or retired first
+scenario: nz_a
+version: 1
+name: robustness
+sensitivity_params: [standard_coal_cost, standard_phwr_cost]
+```
+
+```bash
+uv run python -m supply_side yaml import examples/yaml/nz_a_v1.yaml
+```
 
 ---
 
@@ -123,8 +164,9 @@ Going to a slide, partner, or paper? → [PI sign-off](../pi-signoff.md).
 
 | Symptom | Likely cause |
 |---|---|
-| Results identical across sensitivities | Sweep matched nothing, or does not affect the objective. Diff the configs. |
-| `tracking-check` fails after a run | Something wrote into the staged base case. Re-stage, then find what wrote to it. |
-| Configs are gigabytes | Expected. Use `CONFIG_PERIODS`/`CONFIG_SUBPERIODS` to read them. |
-| A hand-edited config gives a nicer number | Not a result. Fix the YAML or generator, regenerate. |
-| Solver reports infeasible | A validator should have caught it — that is a missing validator, file it. |
+| Results identical across sensitivities | Scope matched nothing, or the parameter does not affect the objective. Check the review's cell count. |
+| Cannot edit a version | It is locked. Make a new version from it. |
+| Cannot start a version from a draft | By design — lock the parent first (run it) or start from the base. |
+| **Mark active** refused | The version has no successful run yet. |
+| `run --wait` or DuckDB says the file is locked | The API is running and owns `results.duckdb`. Stop it, or drop `--wait`. |
+| Solver reports infeasible | The scope or amount produced a physically meaningless case. A validation rule is missing — file it. |

@@ -11,8 +11,8 @@ scalable scenario analysis.
 | # | Principle | You are violating it when |
 |---|---|---|
 | 1 | **Separate data from code.** Inputs change; the logic that runs them does not. | You edit a `.py` file to change a coal cost. |
-| 2 | **Base cases are versioned and immutable.** Snapshot + lock per experiment. | You fix a number by editing the staged case in place. |
-| 3 | **Changes are version-controlled definitions.** A committed YAML, not an edited folder. | Your experiment cannot be reproduced from the repo alone. |
+| 2 | **Base cases are versioned and immutable.** Hashed snapshot; every experiment names one. | You fix a number by editing the staged case in place. |
+| 3 | **Changes are version-controlled definitions.** A recorded, locked version or YAML, not an edited folder. | Your experiment cannot be reproduced from the repo alone. |
 | 4 | **Expand into exact run inputs with a manifest.** Base version, changes, tags, status. | A result exists with no manifest. |
 | 5 | **The model does not need your vocabulary.** MACRO gets absolute values only. | You add a scenario concept to a model input file. |
 | 6 | **Validate against a known reference** before trusting the workflow. | "It looks plausible" is your evidence. |
@@ -26,12 +26,13 @@ scalable scenario analysis.
 
 | Principle | Enforced by |
 |---|---|
-| 2 | `make tracking-check` / `tracking-report` / `tracking-lock` |
-| 4 | Run manifests; see [Provenance](provenance.md) |
-| 6 | `make b-verify` (supply); golden-manifest tests at `1e-6` (demand) |
+| 2 | Base content hash on import (supply) |
+| 3 | Lock rule: a version locks on first run or activation (supply) |
+| 4 | Run manifests + folder-hash check on rebuild; see [Provenance](provenance.md) |
+| 6 | Base case reproduces its reference objective (supply, by hand); golden-manifest tests at `1e-6` (demand) |
 
 !!! note "TODO"
-    Principles 1, 3, 5, 7, 8 have no mechanical check today. Worth deciding which deserve one.
+    Principles 1, 5, 7, 8 have no mechanical check today, and supply-side 6 is manual. Worth deciding which deserve one.
 
 ---
 

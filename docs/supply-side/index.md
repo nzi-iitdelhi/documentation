@@ -2,10 +2,11 @@
 
 **Repo:** [`nzi-iitdelhi/supply-side`](https://github.com/nzi-iitdelhi/supply-side)
 
-Turns a *scenario definition* into *exact MACRO run cases*. Answers: "if coal capex moves
-±5%, what happens to the least-cost system?"
+A scenario database for the supply side. It records scenarios, their versions and
+sensitivities, turns each into an exact MACRO input, runs it, and stores the results.
+Answers: "if coal capex moves ±5%, what happens to the least-cost system?"
 
-Demand is opaque here — an approved native MACRO case, never modified
+Demand is opaque here — part of the approved native MACRO case, never modified
 ([principle 5](../principles/index.md)).
 
 ---
@@ -13,15 +14,19 @@ Demand is opaque here — an approved native MACRO case, never modified
 ## The flow
 
 ```text
-  experiments/*.yaml
-      ├── Experiments   which base case, which scenario label
-      ├── SweepParams   named reusable sweeps → sensitivity points
-      └── Validate      general + supply-case constraints
-              ▼
-      runs/<label>/<sensitivity>.json   one complete, absolute run config each
-              ▼
-      MACRO (MacroEnergy.jl) → outputs + manifest → comparison / tornado charts
+  data/base-case/   native MACRO input folder (staged, git-ignored)
+      │  import → base, with a content hash; files + cells stored in SQLite
+      ▼
+  scenario ── version v1, v2 …   exploration params (one change each)
+      │   └── sensitivity        sensitivity params (lists of amounts)
+      ▼  generate
+  macro input   fingerprinted; one per version, one per sensitivity combination
+      ▼  run    worker → Julia + MacroEnergy.jl (HiGHS)
+  run + manifest + solver log ──▶ results in DuckDB (r_* tables + run_context)
 ```
+
+Explorations and sensitivities are covered in [Run an experiment](run-an-experiment.md).
+Vocabulary: [Glossary](../reference/glossary.md), and `docs/nomenclature.md` in the repo.
 
 ---
 
@@ -29,42 +34,46 @@ Demand is opaque here — an approved native MACRO case, never modified
 
 | Path | What |
 |---|---|
-| `experiments/` | Committed scenario + sensitivity YAML. Source of truth for what was run. |
-| `approach_a/` | Scenario as a registered Python object; `validate_*` at generate time |
-| `approach_b/` | Same pipeline, scenario model in SQLite; constraints in `schema.sql`; Next.js UI |
+| `supply_side/` | FastAPI + SQLModel backend and CLI (`python -m supply_side`) |
+| `web/` | Next.js UI; proxies `/api/*` to the backend |
+| `examples/yaml/` | A version file and a sensitivity file to import |
+| `tests/` | `unittest` suite |
+| `deploy/` | Server-side install script used by `make deploy` |
+| `docs/` | Nomenclature, specs, plans, wireframes; `archived/` is history, not current design |
 | `data/` | Staged base case. **Git-ignored**, created by `make data` |
-| `runs/` | Generated configs. **Git-ignored, never hand-edited** |
-| `tests/` | Unit tests + `test_equivalence.py` (the only file reading both approaches) |
-| `base_case_tracking_example/` | Worked example of base-case locking and diff reporting |
-| `docs/` | Design notes, scenario schema diagrams, two-approaches comparison |
+| `runs/` | One folder per run: MACRO input + solver log. **Git-ignored** |
+| `supply_side/db2.sqlite`, `results.duckdb` | The local databases. **Git-ignored**, created by `make init` |
 
-!!! note "Two approaches, one output"
-    `approach_a/` and `approach_b/` are independent implementations that generate
-    identical configs byte for byte (`make b-verify`, 17 scenarios). Neither imports from
-    the other, so whichever loses is one `rm -rf`.
-
-    A **live design decision**, not permanent architecture — see `docs/two-approaches.md`.
-    Do not add a third.
+!!! note "The two-approach layout is gone"
+    `approach_a/`, `approach_b/`, `experiments/` and `make b-verify` were removed on
+    2026-09-29. They live on the `main-archive` branch; `docs/archived/two-approaches.md`
+    explains them. Do not port anything back without a maintainer.
 
 ---
 
 ## Commands
 
-`make help` is authoritative. The ones that matter:
+`make help` is authoritative.
 
 | Command | Does |
 |---|---|
 | `make data` | Stage the base case into ignored `data/` |
+| `make init` | Fresh databases: migrate, import the base case, seed the library and 4 demo scenarios. **Wipes local DBs.** |
+| `make run-local` | API on `:8002` and UI on `:3000` together; Ctrl-C stops both |
+| `make api` / `make ui` | Just one of them |
+| `make worker` | Execute queued runs without the API |
 | `make test` / `make lint` / `make format` | Unit tests / `black --check` / `black` |
-| `make configs` | Generate one case per sensitivity |
-| `make run` | Generate, then solve with the native Julia solver |
-| `make sample` | Shrink one case, solve with HiGHS (no Gurobi) |
-| `make check-case` | Every declared input path in the staged case resolves |
-| `make tracking-check` / `-report` / `-lock` | Base-case lock verify / diff / re-approve |
-| `make b-verify` | Both approaches generate identical configs |
-| `make run-scenarios PARALLEL=3` | Base case + 16 scenarios, 3 at a time |
+| `make deploy` | Maintainer only — see [Maintainer](maintainer.md#deploying) |
 
-From the **parent repo root**: `make smoke-test`, `make smoke-results`, `make install-julia`.
+The CLI covers what the UI does, plus admin tasks:
+
+| `uv run python -m supply_side …` | Does |
+|---|---|
+| `run <scenario-number> [--wait]` | Queue the active version's run (`--wait` solves it here; API must be stopped) |
+| `recreate <run_id> <dest>` | Rebuild a run's MACRO folder + `manifest.json` from the database alone |
+| `yaml import <file>` / `yaml export …` | Versions and sensitivities as YAML |
+| `import [--case DIR]` | Import a new base case if its content changed |
+| `migrate` / `makemigrations -m "…"` | Alembic upgrade / new migration |
 
 ---
 
@@ -73,6 +82,6 @@ From the **parent repo root**: `make smoke-test`, `make smoke-results`, `make in
 | You are | Go to |
 |---|---|
 | Running a scenario | [Run an experiment](run-an-experiment.md) |
-| Changing generator / validators / approach code | [Developer](developer.md) |
-| Merging, releasing, guarding `main` | [Maintainer](maintainer.md) |
+| Changing backend, UI or run code | [Developer](developer/index.md) |
+| Merging, deploying, guarding `main` | [Maintainer](maintainer.md) |
 | Signing off results | [PI sign-off](../pi-signoff.md) |

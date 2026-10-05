@@ -71,7 +71,12 @@ nav:
   - Supply-side:
       - supply-side/index.md
       - Run an experiment: supply-side/run-an-experiment.md
-      - Developer: supply-side/developer.md
+      - Developer:
+          - supply-side/developer/index.md
+          - Backend and API: supply-side/developer/backend.md
+          - Web UI: supply-side/developer/web-ui.md
+          - Runs and results: supply-side/developer/runs-and-results.md
+          - Tests: supply-side/developer/tests.md
       - Maintainer: supply-side/maintainer.md
   - Demand-side:
       - demand-side/index.md

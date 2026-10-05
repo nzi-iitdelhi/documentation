@@ -30,15 +30,19 @@ refuses some obvious-seeming things.
 
 === "Supply-side"
 
-    Python 3.10+ and Julia. Julia installs into a project-local `.deps/` — no `sudo`.
+    Python 3.10+ with [`uv`](https://docs.astral.sh/uv/), Node 20+. Julia +
+    MacroEnergy.jl only if you will solve: `docs/how_to_run/run-macro-with-highs.md`.
+
+    The base case comes from the reference data folder (see Access); `data/reference.txt`
+    names the folder `make data` copies.
 
     ```bash
     git clone git@github.com:nzi-iitdelhi/supply-side.git
     cd supply-side
     make help           # read the target list first
-    make install-julia
     make data           # stage the base case into ignored data/
     make test
+    make init           # databases: base case, library, 4 demo scenarios
     ```
 
 === "Demand-side"
@@ -66,13 +70,15 @@ This is the part that matters.
 === "Supply-side"
 
     ```bash
-    make smoke-test      # small case, solved with HiGHS — no Gurobi, no HPC
-    make smoke-results   # objective value + capacity
+    make run-local       # UI at http://127.0.0.1:3000, API at :8002
     ```
+
+    Open a scenario, its active version, and **Review** it against the base — you should
+    see exactly which cells it changes. Then solve a small case (needs Julia), with the
+    API stopped:
+
     ```bash
-    cd supply-side
-    make tracking-check  # base case matches its lock
-    make b-verify        # both approaches generate identical configs
+    uv run python -m supply_side run 0 --periods 2 --subperiods 2 --wait   # 0 = Base Case
     ```
 
     Write down the objective value. That is your baseline.
@@ -92,7 +98,7 @@ This is the part that matters.
 
 Before you "discover" a tracked bug:
 
-- Supply: `INF_FIX_CHANGELOG.md`, `docs/two-approaches.md`
+- Supply: `INF_FIX_CHANGELOG.md`, `docs/nomenclature.md`
 - Demand: [known discrepancies](demand-side/index.md#known-open-discrepancies)
 
 ---
@@ -112,5 +118,5 @@ That PR is your onboarding deliverable.
 | Next | Go to |
 |---|---|
 | Run your own scenario | [Supply](supply-side/run-an-experiment.md) · [Demand](demand-side/run-an-experiment.md) |
-| Change code | [Supply dev](supply-side/developer.md) · [Demand dev](demand-side/developer.md) |
+| Change code | [Supply dev](supply-side/developer/index.md) · [Demand dev](demand-side/developer.md) |
 | Vocabulary | [Glossary](reference/glossary.md) |
