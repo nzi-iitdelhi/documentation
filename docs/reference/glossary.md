@@ -1,5 +1,9 @@
 # Glossary
 
+!!! tip "Supply-side terms in full"
+    The supply-side vocabulary, including table names and conventions, is in
+    [Nomenclature](../supply-side/nomenclature.md).
+
 !!! note "TODO"
     Seeded from the repos. Add terms as you hit ones this list does not cover — that is
     the fastest way to improve onboarding.

@@ -58,3 +58,52 @@
 
 /* Active page marked with the accent, not just colour. */
 .md-nav--primary .md-nav__link--active { border-left: 2px solid var(--md-accent-fg-color); padding-left: 0.4rem; }
+
+/* ---- NZI branding: header seal + partner footer (mirrors the supply-side UI) ---- */
+
+/* The seal is dark ink on transparent: give it a white disc so it reads on the petrol header. */
+.md-header__button.md-logo img {
+  height: 1.9rem;
+  width: 1.9rem;
+  background: #fff;
+  border-radius: 50%;
+  padding: 2px;
+}
+
+.md-footer .nzi-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.2rem 2.5rem;
+  width: 100%;
+  margin: 0;
+  padding: 1.2rem 0;
+}
+.md-footer-meta__inner { display: block; }
+.md-footer .nzi-footer__text { display: grid; gap: 0.2rem; font-size: 0.64rem; line-height: 1.5; }
+.md-footer .nzi-footer__text strong { font-size: 0.75rem; font-weight: 600; color: var(--md-footer-fg-color); }
+.md-footer .nzi-footer__text span { color: var(--md-footer-fg-color--light); }
+.md-footer .nzi-footer__licence { color: var(--md-footer-fg-color--lighter) !important; }
+
+/* Logos are opaque raster on white, so they sit on one white plate in both themes. */
+.md-footer .nzi-footer__logos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.1rem 1.6rem;
+  margin: 0;
+  padding: 0.6rem 1rem;
+  background: #fff;
+  border-radius: 8px;
+}
+.md-footer .nzi-footer__logos a { display: block; opacity: 0.92; transition: opacity 0.15s; }
+.md-footer .nzi-footer__logos a:hover, .md-footer .nzi-footer__logos a:focus-visible { opacity: 1; }
+.md-footer .nzi-footer__logos img { display: block; width: auto; }
+.md-footer .nzi-footer__logos .nzi-logo--seal { height: 2.6rem; }
+.md-footer .nzi-footer__logos .nzi-logo--prayas { height: 2.4rem; }
+.md-footer .nzi-footer__logos .nzi-logo--princeton { height: 1.9rem; }
+@media (max-width: 44.984375em) {
+  .md-footer .nzi-footer { padding: 1.2rem 0.6rem; }
+  .md-footer .nzi-footer__logos { gap: 0.8rem 0.9rem; padding: 0.6rem 0.8rem; }
+}

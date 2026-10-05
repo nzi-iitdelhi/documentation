@@ -1,0 +1,14 @@
+{#- NZI branding, mirroring the supply-side UI footer (web/app/layout.tsx). -#}
+<div class="md-copyright nzi-footer">
+  <div class="nzi-footer__text">
+    <strong>Net Zero India</strong>
+    <span>Modelling handbook</span>
+    <span>A collaboration between IIT Delhi, Prayas (Energy Group) and Princeton University</span>
+    {% if config.copyright %}<span class="nzi-footer__licence">{{ config.copyright }}</span>{% endif %}
+  </div>
+  <div class="nzi-footer__logos">
+    <a href="https://home.iitd.ac.in/" target="_blank" rel="noopener" title="IIT Delhi"><img src="{{ 'assets/logos/iitd.svg' | url }}" alt="IIT Delhi" class="nzi-logo--seal"></a>
+    <a href="https://energy.prayaspune.org/" target="_blank" rel="noopener" title="Prayas (Energy Group)"><img src="{{ 'assets/logos/prayas.png' | url }}" alt="Prayas (Energy Group)" class="nzi-logo--prayas"></a>
+    <a href="https://www.princeton.edu/" target="_blank" rel="noopener" title="Princeton University"><img src="{{ 'assets/logos/princeton.png' | url }}" alt="Princeton University" class="nzi-logo--princeton"></a>
+  </div>
+</div>

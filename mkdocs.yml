@@ -8,6 +8,9 @@ copyright: Licensed under the MIT License. Contributions welcome.
 
 theme:
   name: material
+  custom_dir: overrides
+  logo: assets/logos/iitd.svg
+  favicon: assets/logos/iitd.svg
   font:
     text: Inter
     code: JetBrains Mono
@@ -70,6 +73,7 @@ nav:
   - Roles at a glance: roles.md
   - Supply-side:
       - supply-side/index.md
+      - Nomenclature: supply-side/nomenclature.md
       - Run an experiment: supply-side/run-an-experiment.md
       - Developer:
           - supply-side/developer/index.md

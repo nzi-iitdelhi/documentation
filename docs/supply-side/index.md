@@ -26,7 +26,7 @@ Demand is opaque here — part of the approved native MACRO case, never modified
 ```
 
 Explorations and sensitivities are covered in [Run an experiment](run-an-experiment.md).
-Vocabulary: [Glossary](../reference/glossary.md), and `docs/nomenclature.md` in the repo.
+Vocabulary: [Nomenclature](nomenclature.md).
 
 ---
 
