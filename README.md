@@ -17,7 +17,7 @@ Locally:
 
 ```bash
 pip install -r requirements.txt
-mkdocs serve      # http://127.0.0.1:8000
+zensical serve    # http://127.0.0.1:8000/documentation/
 ```
 
 Pages are plain markdown in `docs/`. Add new pages to the `nav:` block in `mkdocs.yml`.

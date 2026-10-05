@@ -20,8 +20,8 @@ No clone, no toolchain. This is the intended path for most edits.
 ```bash
 git clone git@github.com:nzi-iitdelhi/documentation.git
 cd documentation
-pip install mkdocs-material
-mkdocs serve          # http://127.0.0.1:8000, live reload
+pip install -r requirements.txt
+zensical serve        # http://127.0.0.1:8000/documentation/, live reload
 ```
 
 Pages are plain markdown under `docs/`. Navigation is the `nav:` block in `mkdocs.yml` —
