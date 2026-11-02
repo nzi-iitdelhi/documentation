@@ -56,3 +56,34 @@ Tables that exist for normalization, traceability or debugging. They are not thi
 
 1. **Relational store**: the experiment record. Today SQLite.
 2. **Columnar store**: results. Today DuckDB.
+
+## 6. Terminologies for Pre-Scenario Pipeline
+
+The pre-scenario pipeline makes the base model inputs from PIER and other data, before any scenario. It has three layers: bronze, silver and gold. The layer and step names are Andrew's, agreed on 26 October 2026. Example: `supply_side/medallion/README.md`.
+
+### 6.1 Layers
+
+1. **Bronze**: the values as each source gives them, with their units and their source. Bronze has no formulas.
+2. **PIER2.1_Bronze**: the part of bronze that comes from PIER 2.1.
+3. **NZI_Base_Bronze**: the part of bronze that does not come from PIER. It holds fixes to PIER data, extensions of PIER data (for example years after 2041), and data that is not in PIER.
+4. **NZI_Base_Silver**: one value for each parameter, technology, state, vintage and year, selected from bronze. It has two parts:
+   1. **NZI_Base_Silver.PIER_NZI**: in PIER names and PIER units.
+   2. **NZI_Base_Silver.Macro_NZI**: in MACRO names and MACRO units, calculated from PIER_NZI.
+5. **Gold**: the input files of one model (for example a MACRO case folder), written only from silver.
+
+### 6.2 Steps
+
+1. **PIER_TO_DB**: load PIER 2.1 files into bronze.
+2. **OTHER_TO_DB**: load data that is not from PIER into bronze.
+3. **DB_TO_DB**: select one bronze value for each silver key, and write it to PIER_NZI. No formulas.
+4. **DB_TO_MACRO**: convert units and apply the workbook formulas, from PIER_NZI to Macro_NZI.
+5. **Macro_TO_DB**: read MACRO's own definitions (for example default values and commodity types) from MacroEnergy.jl.
+6. **TRANSLATE_MACRO_TO_MacroStructure**: write the MACRO case from Macro_NZI. This step applies the periods, the regions, the asset ids, the graph links and the file layout.
+
+### 6.3 Other Terms
+
+1. **Source kind**: the type of a bronze source: PIER, workbook, hand fix, assumption or projection.
+2. **Source priority**: the order of source kinds that DB_TO_DB uses when two sources give the same value. The highest is first.
+3. **Build**: one run that adds data to bronze or silver. Each build keeps who ran it, when, and from which commit. Earlier builds stay readable.
+4. **Gap**: a value that silver cannot give yet, because a source or a unit is missing. Gold leaves a gap empty. The fix is a row in NZI_Base_Bronze.
+5. **Base case**: the MACRO case that Andrew made by hand. The pipeline compares gold with it, but does not use it as a source.
