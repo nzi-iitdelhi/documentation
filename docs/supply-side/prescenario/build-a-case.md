@@ -19,6 +19,10 @@ The three steps are tabs at the top of the page: **1. Inputs**, **2. Bronze + Si
 An **input set** is one complete copy of the inputs: the PIER folder, the NZI projection files
 and the demand files. Set 1 is the repository's own `inputs/` folder.
 
+The run file (`run_HiGHS.jl`, the HiGHS solver options) is not an input: every case uses the
+repository's copy, and an upload that includes it is refused. To change the solver options,
+change that file in the repository.
+
 To change an input, upload it. You can choose a whole folder (a PIER folder works), single
 files, or a `.zip`.
 
