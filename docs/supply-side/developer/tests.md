@@ -11,7 +11,9 @@ running. The [Web UI](web-ui.md#checking-a-change) page explains both.
 
 ## How the suite works
 
-The tests use `unittest`, not pytest, and live in `tests/test_*.py`.
+The tests use `unittest`, not pytest. Scenario tests are in `tests/scenario/`, pre-scenario
+tests in `tests/prescenario/`, and the shared ones (core, settings, the network view) in
+`tests/`. `make test` runs them all; `make prescenario_test` runs only the pre-scenario ones.
 
 `tests/helpers.py` does most of the setup for you. It gives each test an in-memory SQLite
 database, a `TestClient` connected to it, a tiny fake MACRO case (`make_case`), and a
@@ -21,7 +23,7 @@ fixtures by hand.
 The worker is given a fake solver, so runs finish in milliseconds and produce whatever outputs
 the test asks for.
 
-Migrations have their own tests in `test_migrations.py`. A migration that renames or moves
+Migrations have their own tests in `tests/scenario/test_migrations.py`. A migration that renames or moves
 data should get a test that upgrades a database containing old rows and checks they survived.
 
 ## What a good test checks

@@ -41,6 +41,7 @@ The details differ between the two pipelines, so each side has its own pages.
 | Overview | [Supply-side](supply-side/index.md) | [Demand-side](demand-side/index.md) |
 | Running experiments | [Run an experiment](supply-side/run-an-experiment.md) | [Run an experiment](demand-side/run-an-experiment.md) |
 | Changing code | [Developer](supply-side/developer/index.md) | [Developer](demand-side/developer.md) |
+| Base model inputs | [Pre-scenario pipeline](supply-side/prescenario/index.md) | |
 | Looking after the repo | [Maintainer](supply-side/maintainer.md) | [Maintainer](demand-side/maintainer.md) |
 
 The PI has a single page for both sides: [PI sign-off](pi-signoff.md).

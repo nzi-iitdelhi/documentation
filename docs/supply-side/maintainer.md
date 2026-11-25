@@ -81,6 +81,31 @@ fix it or roll back straight away.
 The server's database was set up once by hand with `python -m supply_side init`. Never run
 that again on a server that has data.
 
+## Pre-scenario pipeline
+
+The pre-scenario pages keep their own database, `runs/prescenario-ui/prescenario.sqlite`, with
+every Bronze and Silver build. `make deploy` does **not** back it up or migrate it, so do both
+by hand when a deploy changes its tables (a new file in `supply_side/prescenario/migrations/versions/`).
+
+1. Back it up first, with SQLite's online backup, so a running job does not leave a torn copy.
+   Keep the copy next to the database as `prescenario.sqlite.bak.<timestamp>`.
+2. Deploy.
+3. Migrate it inside the API container, from the supply-side folder:
+   `python -c "from pathlib import Path; from supply_side.prescenario.common import migrate; migrate.upgrade(Path('runs/prescenario-ui/prescenario.sqlite'))"`.
+   The next build would migrate it too, but the Gold page reads the database before that.
+4. If the migration rewrote tables, run `VACUUM` on it to give the space back.
+5. Open the Inputs, Build and Gold pages and check that the existing builds and cases still show.
+
+Reviewing a pre-scenario pull request:
+
+- An input file is one module in `bronze/sources/pier/` or `bronze/sources/projections/`, and a
+  kind of MACRO asset is one module in `gold/macro/assets/`. A pull request that edits a shared
+  table instead should say why ([Developer](prescenario/developer.md#9-shared-files-that-a-change-can-still-need)).
+- A change that should not change the output must show identical case files before and after.
+  A change that does must list the changed files and attach `make prescenario_diff`.
+- A migration must follow the newest one on `main`. If another pull request merged a migration
+  first, its `down_revision` must be updated before merging.
+
 ## Releases
 
 The versioning rules are on the [Provenance](../principles/provenance.md#versioning-the-pipeline)

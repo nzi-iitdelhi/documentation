@@ -4,9 +4,10 @@ The work is spread over three repositories:
 
 - [`documentation`](https://github.com/nzi-iitdelhi/documentation) is this handbook: the
   principles, roles and workflows.
-- [`supply-side`](https://github.com/nzi-iitdelhi/supply-side) holds the scenario database
-  (scenarios, versions and sensitivities), input generation, MACRO runs and results, with its
-  API and web interface.
+- [`supply-side`](https://github.com/nzi-iitdelhi/supply-side) holds the pre-scenario pipeline
+  (PIER and other data into a base MACRO case, through Bronze, Silver and Gold) and the
+  scenario database (scenarios, versions and sensitivities), input generation, MACRO runs and
+  results, with its API and web interface.
 - [`demand-side`](https://github.com/nzi-iitdelhi/demand-side) holds the residential and
   transport demand pipelines, the RUMI-compatible engine, and the client for the central
   server.
