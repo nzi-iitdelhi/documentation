@@ -7,6 +7,10 @@ least-cost power system change?" It does this with a small scenario database. Yo
 scenario and the changes you want to try, the tool turns each one into an exact input for
 the MACRO model, solves it, and stores the results so they can be compared.
 
+The repository has two parts. The [pre-scenario pipeline](prescenario/index.md) builds the
+base MACRO case from PIER and other data, through Bronze, Silver and Gold. The scenario
+database, described on this page, starts from that base case and runs the experiments.
+
 Demand is treated as fixed here. It arrives as part of the approved base case, and nothing
 on the supply side modifies it ([principle 5](../principles/index.md)).
 
@@ -44,14 +48,17 @@ Julia. Results are loaded into DuckDB, one table per kind of result. The
 
 | Path | What it holds |
 |---|---|
-| `supply_side/` | The backend (FastAPI and SQLModel) and the command line, `python -m supply_side` |
-| `web/` | The Next.js web interface, which forwards `/api/*` requests to the backend |
+| `supply_side/scenario/` | The scenario database: scenarios, versions, sensitivities, input generation, runs and results |
+| `supply_side/prescenario/` | The [pre-scenario pipeline](prescenario/index.md): inputs into Bronze, Silver and a MACRO case |
+| `supply_side/core/`, `supply_side/netviz/` | Shared: the FastAPI app, database and settings; the network view. The command line is `python -m supply_side`. |
+| `web/` | The Next.js web interface, which forwards `/api/*` requests to the backend. `app/(scenario)/` and `app/(prescenario)/` hold each part's pages; the folder names in brackets do not appear in the URLs. |
+| `inputs/` | The pre-scenario input files the pipeline reads (PIER, NZI projections, demand) |
 | `examples/yaml/` | One example version file and one example sensitivity file |
-| `tests/` | The `unittest` test suite |
+| `tests/` | The `unittest` test suite: `tests/scenario/`, `tests/prescenario/`, and shared tests |
 | `deploy/` | The install script `make deploy` runs on the server |
 | `docs/` | Nomenclature, specs, plans and wireframes. `docs/archived/` is history, not current design. |
 | `data/` | The staged base case, created by `make data`. Not tracked by git. |
-| `runs/` | One folder per run, with its MACRO input and solver log. Not tracked by git. |
+| `runs/` | One folder per run, with its MACRO input and solver log, and `runs/prescenario-ui/` for the pre-scenario pages. Not tracked by git. |
 | `supply_side/db2.sqlite`, `results.duckdb` | The local databases, created by `make init`. Not tracked by git. |
 
 !!! note "The old two-approach layout is gone"
@@ -89,7 +96,7 @@ these as `uv run python -m supply_side <command>`:
 
 ## Where to go next
 
-If you want to run a scenario, read [Run an experiment](run-an-experiment.md). If you are
+If you want to build or review the base MACRO case, read [Pre-scenario pipeline](prescenario/index.md). If you want to run a scenario, read [Run an experiment](run-an-experiment.md). If you are
 changing the backend, the web interface or how runs work, read the
 [Developer](developer/index.md) pages. Reviewing, merging and deploying are covered on the
 [Maintainer](maintainer.md) page, and approving results for publication on

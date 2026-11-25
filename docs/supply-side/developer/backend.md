@@ -17,11 +17,14 @@ file has one job:
 - `router.py` defines the HTTP endpoints. Each endpoint calls one selector or one service and
   does nothing else.
 
-The packages are:
+The code is in two halves under `supply_side/`: `scenario/` (this page) and `prescenario/`
+(the [Pre-scenario](../prescenario/developer.md) pipeline). `core/` and `netviz/` are shared by
+both. The scenario packages are in `supply_side/scenario/`:
 
 | Package | What it owns |
 |---|---|
-| `core/` | Settings, the base model, enums, the database engine, errors, events, middleware, and the migration runner |
+| `core/` (shared, `supply_side/core/`) | Settings, the base model, enums, the database engine, errors, events, middleware, and the migration runner |
+| `netviz/` (shared, `supply_side/netviz/`) | The network view of a Silver build or a MACRO case |
 | `base/` | The imported base case: `base`, `base_file` and `base_cell` |
 | `library/` | Parameters, sensitivity params, and the `scale`, `add` and `set` arithmetic |
 | `scenarios/` | Scenarios, versions, exploration params, sensitivities, and the trash |
@@ -81,7 +84,7 @@ uv run python -m supply_side makemigrations -m "what changed"   # generates a mi
 uv run python -m supply_side migrate                            # applies it
 ```
 
-Always read the generated file in `supply_side/migrations/versions/` before committing it,
+Always read the generated file in `supply_side/scenario/migrations/versions/` before committing it,
 because autogenerate misses things. A rename in particular has to be written by hand as a
 rename; otherwise Alembic drops the old column and adds a new one, losing the data.
 `a7c3e91b5d20_rename_params.py` is a good example. Test the upgrade on a database that already

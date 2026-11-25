@@ -15,17 +15,22 @@ fuller, more precise vocabulary, including its table names and conventions, on t
 | **Base** | One import of the base case into the supply-side database. It is read-only and identified by its content hash. |
 | **Base case** | A complete, versioned model case that every experiment starts from. It is never edited in place. |
 | **Blast radius** | How far a code change could reach, which decides what you need to prove before it merges. See the Developer pages. |
+| **Bronze** | The first pre-scenario layer: every input value exactly as its source gives it, with its unit and source. See [Pre-scenario pipeline](../supply-side/prescenario/index.md). |
+| **Build (pre-scenario)** | One Bronze build and one Silver build made from an input set. A build stores only what changed since the build it was made from. |
 | **Central server** | The EC2 machine that stores demand-side runs. It sleeps when idle, and the command line wakes it. |
 | **DOI** | Digital Object Identifier: a permanent, citable identifier for a published dataset or release. |
 | **Experiment** | A general word for a change you are trying out. On the supply side it is an exploration or a sensitivity; on the demand side it is a `run.yaml`. |
 | **Exploration** | A draft scenario version that is still being tried out. |
 | **Exploration param** | One precise change in a version: a parameter, an operation, one amount and a scope. It used to be called an *adjustment*. |
 | **FAIR** | Findable, Accessible, Interoperable and Reusable. See [FAIR for models](../principles/fair.md). |
+| **Gold** | The third pre-scenario layer: the input files of one model, such as a MACRO case, written only from Silver. |
 | **Golden outputs** | Reference outputs committed to the demand-side repository. The tests compare against them at a relative tolerance of `1e-6`. |
 | **HiGHS** | The open-source solver the supply side uses, so no Gurobi licence is needed. |
+| **Input file module** | The one module in `bronze/sources/` that describes an input file: its path, columns, schema, Silver names and units. |
+| **Input set** | One complete, numbered copy of the pre-scenario inputs. An upload makes a new set; no set is changed. |
 | **Lock rule** | A supply-side version or sensitivity locks when its first run is queued (a version also when it is first made active), and never changes after that. |
-| **Macro input** | One complete input handed to MACRO. It is generated and fingerprinted, and never edited by hand. |
 | **MACRO / MacroEnergy.jl** | The energy-system optimisation model, written in Julia, that the supply side builds cases for. |
+| **Macro input** | One complete input handed to MACRO. It is generated and fingerprinted, and never edited by hand. |
 | **Manifest** | Everything needed to recreate a run: the base hash, the input fingerprint, the code commit, the model versions and the options. |
 | **Match rate** | The share of demand-side outputs that match the professor's reference. This is the number that tells us whether the pipeline is right. |
 | **Operation** | How a param changes a value: `scale`, `add` or `set`. |
@@ -40,8 +45,10 @@ fuller, more precise vocabulary, including its table names and conventions, on t
 | **Seed database** | The starting DuckDB file for a demand-side run, fetched with `nzi-pipeline pull-seed`. |
 | **Sensitivity** | A set of variations around a scenario's active version, used to show how robust a result is. It produces one run per combination of amounts. |
 | **Sensitivity param** | A named, reusable list of amounts for a sensitivity: a parameter, an operation, the amounts and a scope. It used to be called a *sweep* or *SweepParam*. |
+| **Silver** | The second pre-scenario layer: one clean value per parameter, technology, place, vintage and year, in base units. |
 | **Soft delete** | Deleting a row only marks it with `is_deleted`. Nothing is removed, and deleted items can be restored from the Trash. |
 | **STC, ELS, TSR, SEC, NC, UP** | Terms in RUMI's demand formula. See [Developer (demand-side)](../demand-side/developer.md). |
+| **Translator** | Code that writes one model's files from Silver. MACRO has one translator per kind of asset, in `gold/macro/assets/`. |
 | **Tunable (`TUNABLE`)** | The short list of constants a demand-side `run.yaml` is allowed to override. |
 
 ## Sector codes

@@ -59,7 +59,7 @@ Tables that exist for normalization, traceability or debugging. They are not thi
 
 ## 6. Terminologies for Pre-Scenario Pipeline
 
-The pre-scenario pipeline makes the base model inputs from PIER and other data, before any scenario. It has three layers: bronze, silver and gold. The layer and step names are Andrew's, agreed on 26 October 2026. Example: `supply_side/medallion/README.md`.
+The pre-scenario pipeline makes the base model inputs from PIER and other data, before any scenario. It has three layers: bronze, silver and gold. The layer and step names are Andrew's, agreed on 26 October 2026. The code is in `supply_side/prescenario/`; see [Pre-scenario pipeline](prescenario/index.md).
 
 ### 6.1 Layers
 

@@ -75,6 +75,11 @@ nav:
       - supply-side/index.md
       - Nomenclature: supply-side/nomenclature.md
       - Run an experiment: supply-side/run-an-experiment.md
+      - Pre-scenario pipeline:
+          - supply-side/prescenario/index.md
+          - Build a MACRO case: supply-side/prescenario/build-a-case.md
+          - Add an input file: supply-side/prescenario/add-an-input-file.md
+          - Developer: supply-side/prescenario/developer.md
       - Developer:
           - supply-side/developer/index.md
           - Backend and API: supply-side/developer/backend.md
