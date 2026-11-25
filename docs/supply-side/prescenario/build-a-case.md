@@ -19,8 +19,9 @@ The three steps are tabs at the top of the page: **1. Inputs**, **2. Bronze + Si
 An **input set** is one complete copy of the inputs: the PIER folder, the NZI projection files
 and the demand files. Set 1 is the repository's own `inputs/` folder.
 
-To change an input, upload it. You can choose a whole folder (a PIER folder works), single
-files, or a `.zip`.
+To change an input, upload it. **Choose files** takes one or more `.csv` files or a `.zip`;
+**Choose folder** takes a whole folder (a PIER folder works). A file chosen on its own is
+matched by its name to the place the pipeline reads it from.
 
 - The upload is laid over the newest input set, and the result becomes a new set. Nothing is
   replaced; every earlier set stays.
@@ -39,19 +40,24 @@ from.
 
 ## 2. Bronze + Silver
 
-A build reads an input set into a new Bronze build and a new Silver build. One job runs at a
+A build turns an input set into a new Bronze build and a new Silver build. One job runs at a
 time; the page shows when another is running.
 
-You have two ways to build:
+**Apply an input set** is the usual step after an upload. Choose the set (the newest by
+default) and the build to apply it to (the latest by default). The page lists the files of
+the set that differ from what that build read, grouped by input: PIER, NZI projections and
+demand. **Apply** reads those inputs again from the set; every other value stays as it was in
+the build. If the set changes nothing, there is nothing to apply.
 
-- **Full build.** Choose **Nothing: full build** and an input set. Every input of that set is
-  read.
-- **Apply one input.** Choose an earlier build under **Build on top of**, then the input to
-  apply (**PIER** or **NZI projections**) and the set to take it from. Every other value stays
-  as it was in the earlier build. Use this to see the effect of one change.
+**Rebuild everything from one input set**, under the apply step, reads every file of a set.
+Use it to start over, not after every upload.
 
-Each build stores only what changed (see [Builds keep history](index.md#builds-keep-history)).
-The table lists every build with its log; a failed build shows its error there.
+The **Builds** table lists every build, newest first, with what it was made from. **View
+changes** shows what a build changed against the build it was made from: the input files that
+changed, and the Silver values that were changed, added or removed, with their values before
+and after. Each build stores only what changed (see
+[Builds keep history](index.md#builds-keep-history)). A failed build shows its error in the
+table, and **log** has the details.
 
 ## 3. Gold: build a MACRO case
 
